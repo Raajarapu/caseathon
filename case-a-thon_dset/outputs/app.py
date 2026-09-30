@@ -6,14 +6,13 @@ from pathlib import Path
 # CONFIG
 # -------------------------------------------------
 
-BASE_DIR = Path(
-    r"C:\Users\RAAJARAPU SUSWIN\Downloads\case-a-thon_dset"
-)
+APP_DIR = Path(__file__).resolve().parent
 
-OUTPUT_DIR = BASE_DIR / "outputs"
+OUTPUT_DIR = APP_DIR
 
 st.set_page_config(
     page_title="Rural Follow-Up Intelligence",
+    page_icon="",
     layout="wide"
 )
 
@@ -23,6 +22,24 @@ st.set_page_config(
 
 @st.cache_data
 def load_data():
+
+    required_files = [
+        "action_queue.csv",
+        "patient360_development.csv",
+        "model_comparison.csv"
+    ]
+
+    missing_files = [
+        file
+        for file in required_files
+        if not (OUTPUT_DIR / file).exists()
+    ]
+
+    if missing_files:
+        raise FileNotFoundError(
+            "Missing required files: "
+            + ", ".join(missing_files)
+        )
 
     action_queue = pd.read_csv(
         OUTPUT_DIR / "action_queue.csv"
@@ -102,9 +119,7 @@ if page == "Overview":
         f"{ltfu_rate:.2f}%"
     )
 
-    st.subheader(
-        "Dropout Points"
-    )
+    st.subheader("Dropout Points")
 
     stage_data = pd.DataFrame({
         "Stage": [
@@ -123,9 +138,7 @@ if page == "Overview":
         stage_data.set_index("Stage")
     )
 
-    st.subheader(
-        "Model Comparison"
-    )
+    st.subheader("Model Comparison")
 
     st.dataframe(
         model_comparison,
@@ -141,9 +154,7 @@ elif page == "Patient 360":
     st.header("Patient 360")
 
     patients = (
-        patient360[
-            "patient_id"
-        ]
+        patient360["patient_id"]
         .dropna()
         .unique()
         .tolist()
@@ -155,8 +166,7 @@ elif page == "Patient 360":
     )
 
     patient = patient360[
-        patient360["patient_id"]
-        == selected_patient
+        patient360["patient_id"] == selected_patient
     ]
 
     if len(patient) > 0:
@@ -180,24 +190,28 @@ elif page == "Patient 360":
             str(row.get("vulnerability_group", "N/A"))
         )
 
-        st.subheader(
-            "Patient Context"
-        )
+        st.subheader("Patient Context")
+
+        context_columns = [
+            "episode_id",
+            "consult_date",
+            "consult_mode",
+            "distance_to_facility_km",
+            "connectivity_quality",
+            "medicine_advised",
+            "test_advised",
+            "review_advised",
+            "lost_to_followup_label"
+        ]
+
+        available_columns = [
+            col
+            for col in context_columns
+            if col in patient.columns
+        ]
 
         st.dataframe(
-            patient[
-                [
-                    "episode_id",
-                    "consult_date",
-                    "consult_mode",
-                    "distance_to_facility_km",
-                    "connectivity_quality",
-                    "medicine_advised",
-                    "test_advised",
-                    "review_advised",
-                    "lost_to_followup_label"
-                ]
-            ],
+            patient[available_columns],
             use_container_width=True
         )
 
@@ -220,15 +234,14 @@ elif page == "Risk Intelligence":
     )
 
     row = risk_sorted[
-        risk_sorted["episode_id"]
-        == selected_episode
+        risk_sorted["episode_id"] == selected_episode
     ].iloc[0]
 
     col1, col2, col3 = st.columns(3)
 
     col1.metric(
         "Risk Probability",
-        f"{row['risk_probability']:.1%}"
+        f"{float(row['risk_probability']):.1%}"
     )
 
     col2.metric(
@@ -237,17 +250,21 @@ elif page == "Risk Intelligence":
     )
 
     col3.metric(
-        "Predicted Stage",
+        "Suggested Stage",
         row["predicted_dropout_stage"]
     )
 
-    st.subheader("Why this episode needs attention")
+    st.subheader(
+        "Why this episode needs attention"
+    )
 
     st.write(
         row["reason"]
     )
 
-    st.subheader("Recommended Action")
+    st.subheader(
+        "Recommended Action"
+    )
 
     st.info(
         row["recommended_action"]
@@ -266,19 +283,25 @@ elif page == "Action Queue":
 
     st.header("Prioritized Action Queue")
 
+    queue_columns = [
+        "episode_id",
+        "patient_id",
+        "risk_probability",
+        "priority_tier",
+        "predicted_dropout_stage",
+        "reason",
+        "recommended_action",
+        "assigned_cadre"
+    ]
+
+    available_queue_columns = [
+        col
+        for col in queue_columns
+        if col in action_queue.columns
+    ]
+
     st.dataframe(
-        action_queue[
-            [
-                "episode_id",
-                "patient_id",
-                "risk_probability",
-                "priority_tier",
-                "predicted_dropout_stage",
-                "reason",
-                "recommended_action",
-                "assigned_cadre"
-            ]
-        ],
+        action_queue[available_queue_columns],
         use_container_width=True,
         height=600
     )
