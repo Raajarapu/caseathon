@@ -1,0 +1,5 @@
+distance_band,episodes,ltfu_rate
+<=2 km,45,20.0
+2-5 km,211,34.6
+5-10 km,592,37.5
+>10 km,3284,51.28

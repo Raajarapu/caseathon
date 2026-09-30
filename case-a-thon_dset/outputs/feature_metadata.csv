@@ -1,0 +1,22 @@
+feature,description
+age,Patient age at reference date
+distance_km,Distance to facility in km
+duration_min,Teleconsultation duration
+review_due_days,Review due interval in days
+medicine_required,Medicine required during current episode
+test_required,Test required during current episode
+review_required,Review required during current episode
+care_requirements_count,Number of care requirements
+complex_care_episode,Episode requiring at least two care actions
+previous_teleconsultations,Number of previous teleconsultations
+has_previous_teleconsult,Whether patient had a previous teleconsultation
+days_since_first_recorded_consult,Days since first recorded consultation
+consultation_frequency,Historical consultation frequency
+previous_care_requirements,Cumulative previous care requirements
+poor_connectivity,Poor recorded connectivity
+long_distance,Distance greater than 10 km
+low_digital_access,Low digital access vulnerability
+elderly_living_alone,Elderly living alone vulnerability
+consult_month,Consultation month
+consult_dayofweek,Day of week
+is_weekend,Weekend indicator

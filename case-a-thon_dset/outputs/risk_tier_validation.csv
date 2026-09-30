@@ -1,0 +1,5 @@
+risk_tier,episodes,actual_ltfu_rate
+LOW,146,23.29
+MEDIUM,403,41.44
+HIGH,244,63.93
+VERY HIGH,34,82.35
