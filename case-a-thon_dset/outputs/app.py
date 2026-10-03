@@ -1,6 +1,3 @@
-from pathlib import Path
-
-code = r'''
 import io
 from pathlib import Path
 
@@ -1774,5 +1771,3 @@ st.caption(
     "follow-up assurance. Synthetic case-a-thon data unless "
     "explicitly uploaded by the user."
 )
-'''
-
