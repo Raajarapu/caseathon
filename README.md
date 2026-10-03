@@ -1,552 +1,486 @@
+
 # Data-Driven Follow-Up Assurance for Rural Teleconsultations
 
-## Infinum 2026 Case-a-thon
+## 1. Problem Understanding
 
-A decision-support prototype for identifying patients at risk of loss to follow-up and helping healthcare workers take timely, actionable follow-up steps.
+Rural teleconsultation data is distributed across multiple healthcare systems. This makes it difficult to maintain a complete patient history, identify patients at risk of Lost to Follow-Up (LTFU), understand the reasons behind the risk, and prioritize follow-up actions.
 
----
-
-## 1. Problem Statement
-
-Teleconsultation improves access to healthcare, but completing a teleconsultation does not necessarily mean that the patient's care journey is complete.
-
-After a consultation, a patient may still need:
-
-- Medicine collection
-- Diagnostic tests
-- Follow-up review
-- Additional outreach
-
-In rural settings, fragmented healthcare records, long travel distances, limited digital access, connectivity constraints, and limited health-worker time can make it difficult to identify which patients need attention first.
-
-The core challenge is:
-
-> How can fragmented rural healthcare data be transformed into actionable intelligence that helps healthcare workers identify patients at risk of loss to follow-up and intervene before care is interrupted?
+The solution focuses on connecting fragmented records, predicting LTFU risk, explaining the risk, and converting predictions into practical follow-up actions.
 
 ---
 
-# 2. Our Solution
+## 2. Dataset
 
-We developed a data-driven follow-up assurance prototype that:
+The solution uses the provided synthetic healthcare dataset containing approximately 5,000 patients and multiple operational healthcare data sources.
 
-- Integrates fragmented healthcare records
-- Links records to a canonical patient identity
-- Creates a Patient 360 view
-- Estimates LTFU risk
-- Explains important risk signals
-- Identifies a suggested follow-up stage
-- Generates a prioritized action queue
+Core datasets include:
 
-The solution is designed as a decision-support system for CHOs and ASHAs.
+- Patient 360 reference
+- Teleconsultations
+- NCD screening
+- Prescriptions
+- Medicine dispensing
+- Medicine stock
+- Laboratory tests
+- Follow-up visits
+- Visit history
+- Outreach actions
+- Facility reference
+- Geography reference
+- Episode outcomes
 
-It does not replace healthcare workers or make clinical decisions.
-
-It helps answer four practical questions:
-
-1. Who needs attention?
-2. Why does the patient need attention?
-3. Where is the care journey likely to break?
-4. What should the healthcare worker do next?
-
----
-
-# 3. Round 1: Understanding the Problem
-
-Our Round 1 analysis focused on understanding the fragmented rural healthcare ecosystem, patient linkage challenges, care-continuity gaps, and the operational needs of healthcare workers.
-
-The key design principles were:
-
-- Build a unified Patient 360
-- Predict LTFU before it occurs
-- Make predictions explainable
-- Convert predictions into actionable follow-up
-- Account for rural access constraints
-- Keep healthcare workers in the decision loop
-
-These principles guided the Round 2 implementation.
+Development data contains known outcomes, while evaluation data contains episodes where outcomes are unavailable.
 
 ---
 
-# 4. Round 2: Working Prototype
+## 3. Data Audit and Standardization
 
-Round 2 converts the problem analysis into a working analytical and decision-support prototype.
+The data was audited for:
 
-The implementation follows five practical stages:
+- Missing values
+- Duplicate records
+- Data types
+- Date ranges
+- Cohorts
+- Identifiers
+- Data consistency
 
-### Connect
-
-Integrate fragmented healthcare records through patient linkage.
-
-### Predict
-
-Estimate the probability that a teleconsultation episode may be lost to follow-up.
-
-### Explain
-
-Identify important factors associated with the predicted risk.
-
-### Prioritize
-
-Organize episodes into operational risk tiers.
-
-### Act
-
-Provide a suggested follow-up stage, recommended action, and assigned cadre.
-
-The objective is to move from prediction to intervention.
+Names, villages, blocks, districts, gender, age, dates, and other fields were standardized before analysis.
 
 ---
 
-# 5. Dataset
+## 4. Patient Record Linkage
 
-The case dataset contains:
+Different healthcare systems contain different patient identifiers.
 
-- 5,000 synthetic patients
-- 5,516 teleconsultation episodes
-- Multiple healthcare-related operational datasets
-- Development and evaluation cohorts
+The solution links records to the canonical patient reference using:
 
-The development cohort contains episodes with known outcomes and is used for analysis and model development.
-
-The evaluation cohort contains later episodes for which outcome labels are not provided.
-
-The dataset is synthetic and is used only for the case competition prototype.
-
----
-
-# 6. Patient Linkage
-
-Different operational systems contain different source-level patient identifiers.
-
-The prototype performs multi-signal patient linkage using available information including:
-
-- Name similarity
+- Name
 - Village
 - Block
 - District
 - Gender
 - Age
 
-Text values are normalized before matching, and fuzzy matching is used where exact matching is not possible.
+`RapidFuzz` is used for fuzzy matching.
 
-The final linkage process achieved:
+The resulting linkage information is stored in:
 
-> 5,516 / 5,516 teleconsultation episodes mapped to a canonical patient record.
+`teleconsultation_linkage.csv`
 
-This represents **100% computational linkage coverage**.
-
-It should not be interpreted as 100% independently validated identity accuracy because the dataset does not provide a complete ground-truth crosswalk for validating every match.
+The reported 100% linkage coverage represents algorithmic matching coverage, not independently validated identity accuracy.
 
 ---
 
-# 7. Key Findings
+## 5. Patient 360
 
-## 7.1 LTFU is a major care-continuity gap
+Linked records are combined into a consolidated Patient 360 view.
 
-Among the 4,132 development episodes:
+This brings together information from consultations, prescriptions, medicines, laboratory tests, follow-ups, outreach, facilities, and geography.
 
-- 2,144 completed the care journey
-- 1,988 were classified as lost to follow-up
-- Overall LTFU rate: **48.11%**
+Output:
 
-This demonstrates that teleconsultation alone does not guarantee continuity of care.
+`patient360_development.csv`
 
-The key opportunity is to identify elevated-risk episodes early enough for proactive intervention.
+This gives healthcare workers a more complete view of an individual's care journey.
 
 ---
 
-## 7.2 LTFU occurs at identifiable stages
+## 6. Healthcare Analysis
 
-The development data identifies three operational dropout points:
+The analysis examined:
 
-| Dropout Point | Episodes |
-|---|---:|
-| Medicine not collected | 1,170 |
-| Review not attended | 543 |
-| Test not completed | 275 |
+- Consultation mode
+- Connectivity
+- Travel distance
+- Care requirements
+- NCD conditions
+- Vulnerability indicators
+- Follow-up requirements
+- Dropout stages
 
-This shows that LTFU is not a single uniform problem.
+The analysis indicates that longer travel distance and higher care requirements are important operational signals associated with LTFU in the development data.
 
-Different patients may require different interventions depending on where their care journey is likely to break.
-
----
-
-## 7.3 Distance is associated with observed LTFU
-
-Observed LTFU rates across distance groups were:
-
-| Distance | Observed LTFU |
-|---|---:|
-| ≤2 km | 20.00% |
-| 2–5 km | 34.60% |
-| 5–10 km | 37.50% |
-| >10 km | 51.28% |
-
-Longer distance is associated with higher observed LTFU in the development data.
-
-This is an observational association and should not be interpreted as proof that distance independently causes LTFU.
+These are associations, not causal conclusions.
 
 ---
 
-## 7.4 Additional care requirements are associated with higher LTFU
+## 7. Care Journey Analysis
 
-### Medicine
+The care journey was analysed across key stages:
 
-- Medicine advised: **54.33%**
-- No medicine advised: **27.79%**
+- Diagnostic test completion
+- Medicine collection
+- Review attendance
+- Completion of care
 
-### Diagnostic test
-
-- Test advised: **57.92%**
-- No test advised: **42.62%**
-
-### Review
-
-- Review advised: **54.04%**
-- No review advised: **35.53%**
-
-This indicates that additional post-consultation requirements can represent important points where continuity of care may be interrupted.
+This helps identify where a patient may require additional follow-up support.
 
 ---
 
-# 8. Machine Learning Approach
+## 8. Feature Engineering
 
-The LTFU prediction pipeline is designed around the prediction point:
+Features were created using information available at the end of the teleconsultation.
 
-> **End of the teleconsultation**
-
-Only information available at or before this point is used for prediction.
-
-Future information such as:
-
-- Medicine dispensing
-- Future laboratory completion
-- Future follow-up visits
-- Future outreach actions
-- Final outcome labels
-
-is excluded from the model features.
-
-This helps reduce temporal leakage.
-
----
-
-# 9. Model Features
-
-The model uses multiple categories of features.
-
-### Consultation characteristics
+Important features include:
 
 - Age
+- Distance
 - Consultation duration
-- Distance to facility
-- Review due days
-
-### Care requirements
-
-- Medicine required
-- Test required
-- Review required
-- Care requirements count
-- Complex care episode
-
-### Historical context
-
-- Previous teleconsultations
+- Review due period
+- Medicine requirement
+- Test requirement
+- Review requirement
+- Care requirement count
+- Previous consultations
 - Previous care requirements
-- Consultation frequency
-- Previous consultation history
-
-### Access and vulnerability indicators
-
-- Long distance
-- Poor connectivity
-- Low digital access
-- Elderly living alone
-
-### Temporal features
-
-- Consultation month
-- Day of week
-- Weekend indicator
+- Connectivity
+- Digital access
+- Distance indicators
+- Vulnerability indicators
+- Temporal features
 
 ---
 
-# 10. Model Comparison and Validation
+## 9. Leakage Prevention
 
-Multiple machine-learning models are evaluated using a temporal validation approach.
+The prediction point is defined at the end of the teleconsultation.
 
-The development data is ordered chronologically and separated into training and validation periods.
+Future information such as future dispensing, laboratory completion, follow-up attendance, outreach, and final outcomes is excluded from model inputs.
 
-Evaluation includes:
+Historical patient information is calculated chronologically.
+
+---
+
+## 10. LTFU Machine Learning
+
+Three models were evaluated:
+
+- Logistic Regression
+- Random Forest
+- Extra Trees
+
+A temporal validation approach was used.
+
+The models were evaluated using:
 
 - ROC-AUC
 - PR-AUC
 - Accuracy
 - Precision
 - Recall
-- F1 score
+- F1 Score
 
-PR-AUC is particularly useful for assessing performance when the positive class is important for operational prioritization.
-
-The selected model is then retrained using the available development data and used to generate evaluation-cohort risk predictions.
+Logistic Regression achieved the highest PR-AUC among the evaluated models and was selected for the final risk workflow.
 
 ---
 
-# 11. Explainability
+## 11. Risk Prediction and Explainability
 
-The prototype does not provide only a risk score.
+Each evaluation episode receives an operational risk score and risk tier:
 
-Feature-importance analysis identified the following leading model signals:
+- Low
+- Medium
+- High
+- Very High
 
-| Feature | Importance |
-|---|---:|
-| Care requirements count | 12.43% |
-| Review required | 9.75% |
-| Medicine required | 8.63% |
-| Distance | 8.11% |
-| Complex care episode | 7.05% |
-| Long distance | 5.34% |
-| Previous care requirements | 5.10% |
-| Duration | 4.60% |
-| Review due days | 4.47% |
-| Low digital access | 4.21% |
+The solution also identifies important risk factors instead of showing only a score.
 
-The strongest signals are concentrated around care complexity, required follow-up, and access constraints.
+Key factors include care requirements, review requirements, medicine requirements, distance, complex care, previous care requirements, and digital access.
 
-Feature importance describes model behavior and does not establish causal relationships.
+Outputs include:
+
+- `evaluation_predictions.csv`
+- `feature_importance.csv`
+- `risk_tier_validation.csv`
 
 ---
 
-# 12. Risk Intelligence
+## 12. Suggested Follow-Up Stage
 
-The prototype converts predicted probabilities into operational risk tiers:
-
-| Risk Tier | Operational Purpose |
-|---|---|
-| LOW | Routine monitoring |
-| MEDIUM | Monitor and consider follow-up |
-| HIGH | Prioritized follow-up |
-| VERY HIGH | Immediate prioritization for proactive outreach |
-
-The purpose of risk tiers is to help healthcare workers manage limited follow-up capacity.
-
----
-
-# 13. From Prediction to Action
-
-A risk score alone is not enough for operational use.
-
-The prototype therefore combines:
-
-**Risk + Reason + Suggested Stage + Recommended Action + Cadre**
-
-For example, a high-risk episode may show:
-
-### Risk
-
-89.2%
-
-### Priority
-
-VERY HIGH
-
-### Suggested Stage
-
-Medicine not collected
-
-### Reasons
-
-- Long distance to facility
-- Medicine collection required
-- Diagnostic test required
-- Follow-up review required
-
-### Recommended Action
-
-Verify medicine availability and coordinate collection support.
-
-### Assigned Cadre
-
-ASHA
-
-This demonstrates how a model output can be transformed into an operational follow-up task.
-
----
-
-# 14. Suggested Follow-up Stage
-
-The current prototype provides an operational stage suggestion based on the care requirements recorded at the consultation.
+The system provides a **Suggested Stage** based on available care requirements and episode information.
 
 Examples include:
 
-- Medicine not collected
-- Review not attended
-- Test not completed
-- Care journey monitoring
+- Test completion
+- Medicine collection
+- Review attendance
+- General follow-up
 
-This component is a rule-based operational suggestion and is **not a separately trained ML dropout-stage classifier**.
-
-This distinction is maintained to avoid overstating model capability.
+This is an operational rule-based suggestion and not a trained clinical classifier.
 
 ---
 
-# 15. Prioritized Action Queue
+## 13. Medicine Stock → Patient Impact
 
-The Action Queue converts model outputs into a practical worklist.
+Medicine information is connected with patient-level follow-up intelligence.
 
-Each episode contains:
+The application considers available:
 
-- Episode ID
-- Patient ID
-- Risk probability
-- Priority tier
-- Reason
-- Suggested dropout stage
-- Recommended action
-- Assigned cadre
+- Prescription data
+- Dispensing data
+- Medicine stock information
+- Facility information
+- Patient risk information
 
-This changes the operational question from:
-
-> "Which patients should I call?"
-
-to:
-
-> "Which patients need attention first, why, and what should I do next?"
+This helps identify situations where medicine availability or collection may require operational attention.
 
 ---
 
-# 16. Prototype
+## 14. Care-Burden Intelligence
 
-The Streamlit prototype contains four views.
+A Care-Burden Score is used for operational prioritization.
 
-## Overview
+It considers factors such as:
 
-Provides:
-
-- Development episode count
-- LTFU episode count
-- LTFU rate
-- Observed dropout points
-- Model comparison
-
-## Patient 360
-
-Provides:
-
-- Patient information
-- Consultation history
-- Distance
-- Connectivity
+- Number of care requirements
 - Medicine requirement
 - Test requirement
 - Review requirement
-- Development outcome information
+- Distance
+- Complex care
+- Previous care requirements
 
-## Risk Intelligence
+The score supports workforce prioritization and does not represent clinical severity.
 
-Provides:
+---
 
-- Risk probability
-- Priority tier
-- Suggested stage
+## 15. Follow-Up Dependency and Next-Best Action
+
+The system converts patient context into practical operational actions.
+
+Examples include:
+
+- Prioritize medicine follow-up
+- Prioritize diagnostic test follow-up
+- Prioritize review attendance
+- Prioritize outreach
+- Continue monitoring
+
+These recommendations are rule-based operational guidance and are not clinical treatment decisions.
+
+---
+
+## 16. Human-Centred Example
+
+Consider a patient living in a remote village who has:
+
+- A long distance to the facility
+- Medicine requirements
+- A pending diagnostic test
+- A scheduled review
+- Higher overall care burden
+- High predicted LTFU risk
+
+Instead of giving the healthcare worker only a risk score, the system provides the patient's context, explains the important risk factors, identifies the likely follow-up stage, and suggests the next operational action.
+
+This converts **prediction into practical follow-up support** for CHOs and ASHAs.
+
+---
+
+## 17. Action Queue
+
+The final action queue prioritizes cases using:
+
+- Patient information
+- Episode information
+- Risk score
+- Risk tier
 - Risk reasons
+- Suggested stage
+- Care burden
 - Recommended action
-- Assigned cadre
 
-## Action Queue
+Output:
 
-Provides a prioritized list of episodes requiring attention.
+`action_queue.csv`
 
----
-
-# 17. Operational Recommendations
-
-## 1. Start follow-up planning immediately after consultation
-
-Risk assessment should occur at the end of the consultation instead of waiting until a patient is already lost to follow-up.
-
-## 2. Use stage-specific interventions
-
-Different dropout points require different responses.
-
-Medicine-related risk can trigger medicine availability and collection support.
-
-Review-related risk can trigger reminders and review coordination.
-
-Test-related risk can trigger test availability and completion support.
-
-## 3. Prioritize limited health-worker capacity
-
-CHOs and ASHAs should receive a prioritized action queue rather than an unstructured list of patients.
-
-## 4. Support difficult-to-reach patients
-
-Distance and digital-access indicators can help identify patients who may require more proactive or assisted follow-up.
-
-## 5. Keep healthcare workers in the loop
-
-The system provides recommendations and explanations.
-
-The final operational decision remains with the healthcare worker.
+This allows limited healthcare-worker time to be directed towards cases requiring attention.
 
 ---
 
-# 18. Rural Deployment Considerations
+## 18. Key Findings
 
-A production implementation should account for rural operating conditions.
+The analysis identified several operational findings:
 
-### Low connectivity
-
-Support lightweight data exchange and synchronization when connectivity becomes available.
-
-### Low-end devices
-
-The field interface should remain simple and focus on:
-
-- Patient
-- Risk
-- Reason
-- Next action
-- Follow-up status
-
-### Limited workforce
-
-The system should prioritize actionable high-risk episodes instead of overwhelming healthcare workers with every patient.
-
-### Privacy and security
-
-A production implementation should include:
-
-- Role-based access control
-- Minimum necessary data access
-- Secure data transmission
-- Audit trails
-- Appropriate data retention
-- Fairness monitoring
-- Explainability
+- LTFU is substantial within the development cohort.
+- Longer travel distance is associated with higher observed LTFU.
+- Patients with multiple care requirements show higher observed LTFU.
+- Medicine, test, and review requirements create additional follow-up dependencies.
+- Patient history provides useful context for risk assessment.
+- A risk score alone is insufficient for field operations; healthcare workers need reasons and recommended actions.
 
 ---
 
-# 19. Technical Pipeline
+## 19. Proposed Solution
 
-The project is organized into the following notebooks:
+The solution combines:
+
+**Patient 360 + LTFU Risk Prediction + Explainability + Care-Journey Intelligence + Action Prioritization**
+
+The main objective is to move from fragmented healthcare records to actionable follow-up intelligence.
+
+---
+
+## 20. Recommendations
+
+Based on the analysis, the solution recommends:
+
+- Prioritize patients using risk and care burden.
+- Consider travel distance when planning outreach.
+- Track medicine, test, and review dependencies.
+- Provide explainable reasons with every risk prediction.
+- Give CHOs and ASHAs practical next actions rather than only risk scores.
+- Maintain audit trails and role-based access for sensitive healthcare data.
+- Validate linkage quality before production deployment.
+- Monitor model performance when new regional data becomes available.
+
+---
+
+## 21. Streamlit Application
+
+The final application is implemented using Streamlit.
+
+The dashboard provides:
+
+- Overview
+- Patient 360
+- Risk AI
+- Care Journey
+- Action Queue
+- Workforce Intelligence
+- Medicine Impact
+- Care-Burden Intelligence
+- Next-Best Action
+- Monitoring
+- Data Hub
+
+Main application:
+
+`outputs/app.py`
+
+---
+
+## 22. Technology Stack
+
+### Data and Programming
+
+- Python
+- Pandas
+- NumPy
+- Regular Expressions
+- RapidFuzz
+
+### Machine Learning
+
+- Scikit-learn
+- Logistic Regression
+- Random Forest
+- Extra Trees
+- Temporal Validation
+- Risk Tiering
+- Feature Importance
+
+### Visualization and Application
+
+- Streamlit
+- Plotly
+- Matplotlib
+
+### Development and Version Control
+
+- Jupyter Notebook
+- Git
+- GitHub
+
+### Cloud and Deployment
+
+- Streamlit Cloud
+- Docker
+- AWS EC2
+- AWS ECR
+
+The application was also containerized and tested on AWS EC2 using the Docker image. The EC2 deployment was successfully validated as an additional cloud deployment path.
+
+---
+
+## 23. Implementation
+
+The complete data science workflow is implemented through:
 
 ```text
 01_data_audit.ipynb
-    Data audit and patient linkage
-
 02_patient360_eda.ipynb
-    Patient 360 construction and exploratory analysis
-
 03_feature_engineering.ipynb
-    Leakage-safe feature engineering
-
 04_ltfu_model.ipynb
-    LTFU model development and temporal validation
-
 05_explainability_actions.ipynb
-    Explainability, risk reasons and action queue
-
 06_output.ipynb
-    Reserved for final output work
+````
+
+The notebooks generate the required CSV outputs, which are consumed by the Streamlit application.
+
+
+
+## 24. Deployment and Regional Reusability
+
+The Feature Branch contains both the Streamlit application and the `Dockerfile`.
+
+The solution supports:
+
+* GitHub-based version control
+* Streamlit Cloud deployment
+* Docker-based deployment
+* AWS cloud deployment when required
+
+The same application and packaged Docker image can be reused for other regions.
+
+Only the **regional data adaptation and corresponding data mapping** need to change. The core Patient 360, prediction, explainability, care-burden, action-generation, and application layers remain reusable.
+
+**Build once, package once, and reuse across regions; adapt the regional data layer for each deployment.**
+
+For organizations requiring AWS infrastructure, the same containerized application can be deployed using AWS services such as EC2 and ECR.
+
+---
+
+## 25. Project Structure
+
+```text
+caseathon/
+│
+├── README.md
+│
+└── case-a-thon_dset/
+    ├── Dockerfile
+    ├── requirements.txt
+    │
+    ├── Infinum_2026_Candidate_Dataset_Pack/
+    │
+    ├── notebooks/
+    │   ├── 01_data_audit.ipynb
+    │   ├── 02_patient360_eda.ipynb
+    │   ├── 03_feature_engineering.ipynb
+    │   ├── 04_ltfu_model.ipynb
+    │   ├── 05_explainability_actions.ipynb
+    │   └── 06_output.ipynb
+    │
+    └── outputs/
+        ├── app.py
+        ├── action_queue.csv
+        ├── evaluation_intelligence.csv
+        ├── evaluation_predictions.csv
+        ├── feature_importance.csv
+        ├── feature_metadata.csv
+        ├── model_comparison.csv
+        ├── model_features.csv
+        ├── patient360_development.csv
+        ├── risk_tier_validation.csv
+        ├── teleconsultation_linkage.csv
+        └── EDA output files
+```
+
+## Final Outcome
+
+The project provides a practical, data-driven approach to rural follow-up assurance by connecting patient records, identifying LTFU risk, explaining the risk, understanding care dependencies, and converting intelligence into actionable follow-up priorities.
+
+The focus is not only **predicting who may be lost to follow-up**, but helping healthcare workers understand **why the patient may be at risk and what operational action can be considered next**.
+
