@@ -1776,11 +1776,3 @@ st.caption(
 )
 '''
 
-path = Path("/mnt/data/app_fixed.py")
-path.write_text(code, encoding="utf-8")
-
-# Syntax validation before giving the file to the user.
-compile(code, "app_fixed.py", "exec")
-
-print(f"Created and syntax-validated: {path}")
-print(f"Lines: {len(code.splitlines())}")
