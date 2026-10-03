@@ -633,7 +633,7 @@ def metric_card(label, value, description=None):
 # ============================================================
 
 def horizontal_bars(series, value_suffix="", max_items=10):
-    """Render a clean light-theme horizontal bar chart without a chart dependency."""
+    """Render chart rows using native Streamlit components; never expose HTML source."""
     if series is None or len(series) == 0:
         st.info("No chart data available.")
         return
@@ -646,31 +646,22 @@ def horizontal_bars(series, value_suffix="", max_items=10):
         return
 
     maximum = float(data.max()) or 1.0
-    rows = []
 
     for label, value in data.items():
-        safe_label = html.escape(str(label))
         numeric = float(value)
-        width = max(3.0, min(100.0, numeric / maximum * 100.0))
-        display = f"{numeric:,.0f}{value_suffix}"
-        rows.append(
-            f"""
-            <div class="bar-row">
-                <div class="bar-row-top">
-                    <span class="bar-label">{safe_label}</span>
-                    <span class="bar-value">{display}</span>
-                </div>
-                <div class="bar-track">
-                    <div class="bar-fill" style="width:{width:.1f}%"></div>
-                </div>
-            </div>
-            """
-        )
-
-    st.markdown(
-        '<div class="chart-card">' + "".join(rows) + '</div>',
-        unsafe_allow_html=True,
-    )
+        ratio = max(0.0, min(1.0, numeric / maximum))
+        left, right = st.columns([5, 1])
+        with left:
+            st.markdown(
+                f"<div style=\"font-weight:650;color:#334155;font-size:0.88rem;margin-bottom:4px;\">{html.escape(str(label))}</div>",
+                unsafe_allow_html=True,
+            )
+            st.progress(ratio)
+        with right:
+            st.markdown(
+                f"<div style=\"text-align:right;font-weight:750;color:#0F172A;font-size:0.9rem;padding-top:20px;\">{numeric:,.0f}{value_suffix}</div>",
+                unsafe_allow_html=True,
+            )
 
 
 # ============================================================
