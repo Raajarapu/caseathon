@@ -1,3 +1,4 @@
+
 import io
 from pathlib import Path
 
@@ -51,114 +52,288 @@ OPTIONAL_FILES = [
 ]
 
 # ============================================================
-# STYLE
+# GLOBAL LIGHT THEME
 # ============================================================
 
 st.markdown(
     """
-    <style>
-    .block-container {
-        padding-top: 2rem !important;
-        padding-bottom: 3rem !important;
-        max-width: 1500px !important;
-    }
+<style>
 
+/* ---------- APP BACKGROUND ---------- */
+
+.stApp,
+[data-testid="stAppViewContainer"],
+[data-testid="stMain"],
+.main,
+section.main {
+    background: #F5F7FA !important;
+    color: #172033 !important;
+}
+
+[data-testid="stHeader"] {
+    background: #F5F7FA !important;
+}
+
+.block-container {
+    max-width: 1500px !important;
+    padding-top: 2rem !important;
+    padding-bottom: 3rem !important;
+}
+
+/* ---------- ALL NORMAL TEXT ---------- */
+
+html, body, [class*="css"] {
+    color: #172033 !important;
+}
+
+p, span, label, small, li {
+    color: #334155 !important;
+    opacity: 1 !important;
+}
+
+/* ---------- HEADINGS ---------- */
+
+h1, h2, h3, h4, h5, h6,
+[data-testid="stMarkdownContainer"] h1,
+[data-testid="stMarkdownContainer"] h2,
+[data-testid="stMarkdownContainer"] h3,
+[data-testid="stMarkdownContainer"] h4 {
+    color: #172033 !important;
+    -webkit-text-fill-color: #172033 !important;
+    opacity: 1 !important;
+    font-weight: 750 !important;
+    line-height: 1.25 !important;
+    visibility: visible !important;
+}
+
+/* ---------- APP TITLE ---------- */
+
+.app-title {
+    color: #172033 !important;
+    -webkit-text-fill-color: #172033 !important;
+    font-size: 2.35rem !important;
+    font-weight: 800 !important;
+    line-height: 1.15 !important;
+    margin: 0 0 0.35rem 0 !important;
+    visibility: visible !important;
+}
+
+.app-subtitle {
+    color: #64748B !important;
+    -webkit-text-fill-color: #64748B !important;
+    font-size: 1rem !important;
+    font-weight: 500 !important;
+    line-height: 1.5 !important;
+    margin: 0 0 1.8rem 0 !important;
+}
+
+/* ---------- EXPLICIT SECTION HEADINGS ---------- */
+
+.section-title {
+    color: #172033 !important;
+    -webkit-text-fill-color: #172033 !important;
+    font-size: 1.75rem !important;
+    font-weight: 800 !important;
+    line-height: 1.25 !important;
+    margin: 0.4rem 0 1rem 0 !important;
+    visibility: visible !important;
+}
+
+.subsection-title {
+    color: #1E293B !important;
+    -webkit-text-fill-color: #1E293B !important;
+    font-size: 1.25rem !important;
+    font-weight: 750 !important;
+    line-height: 1.3 !important;
+    margin: 0.8rem 0 0.75rem 0 !important;
+    visibility: visible !important;
+}
+
+.helper-text {
+    color: #64748B !important;
+    -webkit-text-fill-color: #64748B !important;
+    font-size: 0.95rem !important;
+    line-height: 1.5 !important;
+    margin-bottom: 1rem !important;
+}
+
+/* ---------- CUSTOM METRIC CARDS ---------- */
+
+.metric-card {
+    background: #FFFFFF !important;
+    border: 1px solid #D8E0EA !important;
+    border-radius: 14px !important;
+    padding: 1.05rem 1.15rem !important;
+    min-height: 118px !important;
+    box-shadow: 0 3px 10px rgba(15, 23, 42, 0.07) !important;
+    margin-bottom: 0.8rem !important;
+    overflow: hidden !important;
+}
+
+.metric-label {
+    color: #475569 !important;
+    -webkit-text-fill-color: #475569 !important;
+    font-size: 0.82rem !important;
+    font-weight: 700 !important;
+    line-height: 1.25 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.035em !important;
+    margin-bottom: 0.55rem !important;
+}
+
+.metric-value {
+    color: #0F172A !important;
+    -webkit-text-fill-color: #0F172A !important;
+    font-size: 1.9rem !important;
+    font-weight: 800 !important;
+    line-height: 1.15 !important;
+    word-break: break-word !important;
+}
+
+.metric-description {
+    color: #64748B !important;
+    -webkit-text-fill-color: #64748B !important;
+    font-size: 0.76rem !important;
+    line-height: 1.35 !important;
+    margin-top: 0.35rem !important;
+}
+
+/* ---------- INSIGHT CARDS ---------- */
+
+.insight-box {
+    background: #FFFFFF !important;
+    color: #172033 !important;
+    border: 1px solid #D8E0EA !important;
+    border-radius: 12px !important;
+    padding: 1rem 1.15rem !important;
+    margin: 0.55rem 0 !important;
+    box-shadow: 0 2px 7px rgba(15, 23, 42, 0.06) !important;
+    line-height: 1.55 !important;
+}
+
+.insight-box,
+.insight-box p,
+.insight-box span,
+.insight-box strong {
+    color: #172033 !important;
+    -webkit-text-fill-color: #172033 !important;
+}
+
+/* ---------- SIDEBAR ---------- */
+
+section[data-testid="stSidebar"] {
+    background: #FFFFFF !important;
+    border-right: 1px solid #D8E0EA !important;
+}
+
+section[data-testid="stSidebar"] * {
+    color: #172033 !important;
+    -webkit-text-fill-color: #172033 !important;
+}
+
+section[data-testid="stSidebar"] [data-testid="stCaptionContainer"] * {
+    color: #64748B !important;
+}
+
+section[data-testid="stSidebar"] .stSuccess {
+    background: #E7F6EC !important;
+    border: 1px solid #B8E0C4 !important;
+    color: #176B3A !important;
+}
+
+/* ---------- INPUTS ---------- */
+
+div[data-baseweb="select"] > div,
+div[data-baseweb="input"] > div,
+textarea,
+input {
+    background: #FFFFFF !important;
+    color: #172033 !important;
+}
+
+div[data-baseweb="select"] *,
+div[data-baseweb="input"] *,
+[data-testid="stFileUploader"] * {
+    color: #172033 !important;
+}
+
+div[data-baseweb="select"] > div {
+    border-color: #CBD5E1 !important;
+    border-radius: 8px !important;
+}
+
+/* ---------- BUTTONS ---------- */
+
+.stButton > button,
+.stDownloadButton > button {
+    background: #FFFFFF !important;
+    color: #172033 !important;
+    border: 1px solid #CBD5E1 !important;
+    border-radius: 8px !important;
+}
+
+.stButton > button:hover,
+.stDownloadButton > button:hover {
+    border-color: #64748B !important;
+    color: #0F172A !important;
+}
+
+/* ---------- DATAFRAMES ---------- */
+
+div[data-testid="stDataFrame"] {
+    background: #FFFFFF !important;
+    border: 1px solid #D8E0EA !important;
+    border-radius: 10px !important;
+    overflow: hidden !important;
+}
+
+/* ---------- ALERTS ---------- */
+
+div[data-testid="stAlert"] {
+    border-radius: 10px !important;
+}
+
+/* ---------- DIVIDERS ---------- */
+
+hr {
+    border-color: #D8E0EA !important;
+}
+
+/* ---------- RADIO ---------- */
+
+div[data-testid="stRadio"] label,
+div[data-testid="stRadio"] p,
+div[data-testid="stRadio"] span {
+    color: #172033 !important;
+    -webkit-text-fill-color: #172033 !important;
+}
+
+/* ---------- CAPTIONS ---------- */
+
+[data-testid="stCaptionContainer"],
+[data-testid="stCaptionContainer"] p {
+    color: #64748B !important;
+    -webkit-text-fill-color: #64748B !important;
+}
+
+/* ---------- RESPONSIVE ---------- */
+
+@media (max-width: 900px) {
     .app-title {
-        color: #F8FAFC !important;
-        font-size: 2.35rem !important;
-        font-weight: 750 !important;
-        line-height: 1.2 !important;
-        margin: 0 0 0.35rem 0 !important;
-        overflow: visible !important;
+        font-size: 1.9rem !important;
     }
 
-    .app-subtitle {
-        color: #94A3B8 !important;
-        font-size: 1.02rem !important;
-        line-height: 1.5 !important;
-        margin: 0 0 1.7rem 0 !important;
+    .section-title {
+        font-size: 1.5rem !important;
     }
 
-    h1, h2, h3, h4 {
-        color: #F8FAFC !important;
-        line-height: 1.3 !important;
-        overflow: visible !important;
+    .metric-value {
+        font-size: 1.55rem !important;
     }
+}
 
-    div[data-testid="stMetric"] {
-        background: #FFFFFF !important;
-        border: 1px solid #E2E8F0 !important;
-        border-radius: 14px !important;
-        padding: 1rem 1.15rem !important;
-        min-height: 112px !important;
-        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.10) !important;
-        overflow: visible !important;
-    }
-
-    div[data-testid="stMetricLabel"],
-    div[data-testid="stMetricLabel"] p {
-        color: #475569 !important;
-        opacity: 1 !important;
-        -webkit-text-fill-color: #475569 !important;
-        font-weight: 600 !important;
-        font-size: 0.88rem !important;
-    }
-
-    div[data-testid="stMetricValue"],
-    div[data-testid="stMetricValue"] div {
-        color: #0F172A !important;
-        opacity: 1 !important;
-        -webkit-text-fill-color: #0F172A !important;
-        font-weight: 750 !important;
-        line-height: 1.2 !important;
-        font-size: 1.85rem !important;
-    }
-
-    div[data-testid="stMetricDelta"],
-    div[data-testid="stMetricDelta"] p {
-        opacity: 1 !important;
-    }
-
-    .insight-box {
-        background: #FFFFFF !important;
-        color: #0F172A !important;
-        border: 1px solid #CBD5E1 !important;
-        border-radius: 12px !important;
-        padding: 1rem 1.15rem !important;
-        margin: 0.55rem 0 !important;
-        box-shadow: 0 2px 7px rgba(15, 23, 42, 0.06) !important;
-        line-height: 1.55 !important;
-    }
-
-    .insight-box strong {
-        color: #0F172A !important;
-    }
-
-    div[data-testid="stAlert"] {
-        border-radius: 12px !important;
-    }
-
-    div[data-testid="stDataFrame"] {
-        border-radius: 10px !important;
-        overflow: hidden !important;
-    }
-
-    section[data-testid="stSidebar"] {
-        border-right: 1px solid #334155 !important;
-    }
-
-    @media (max-width: 900px) {
-        .app-title {
-            font-size: 1.9rem !important;
-        }
-
-        div[data-testid="stMetricValue"],
-        div[data-testid="stMetricValue"] div {
-            font-size: 1.55rem !important;
-        }
-    }
-    </style>
-    """,
+</style>
+""",
     unsafe_allow_html=True,
 )
 
@@ -200,6 +375,7 @@ def percent(value):
 
 def probability(series):
     values = pd.to_numeric(series, errors="coerce")
+
     if values.dropna().empty:
         return values
 
@@ -210,8 +386,14 @@ def probability(series):
 
 
 def text_value(value, default="N/A"):
-    if pd.isna(value):
+    if value is None:
         return default
+
+    try:
+        if pd.isna(value):
+            return default
+    except Exception:
+        pass
 
     value = str(value).strip()
     return value if value else default
@@ -221,8 +403,48 @@ def safe_metric(value, default="N/A"):
     return text_value(value, default)
 
 
+def title(text):
+    st.markdown(
+        f'<div class="section-title">{text}</div>',
+        unsafe_allow_html=True,
+    )
+
+
+def subtitle(text):
+    st.markdown(
+        f'<div class="helper-text">{text}</div>',
+        unsafe_allow_html=True,
+    )
+
+
+def subsection(text):
+    st.markdown(
+        f'<div class="subsection-title">{text}</div>',
+        unsafe_allow_html=True,
+    )
+
+
+def metric_card(label, value, description=None):
+    description_html = ""
+    if description:
+        description_html = (
+            f'<div class="metric-description">{description}</div>'
+        )
+
+    st.markdown(
+        f"""
+        <div class="metric-card">
+            <div class="metric-label">{label}</div>
+            <div class="metric-value">{value}</div>
+            {description_html}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 # ============================================================
-# LOAD PROJECT OUTPUTS
+# LOAD DATA
 # ============================================================
 
 @st.cache_data(show_spinner=False)
@@ -253,6 +475,7 @@ except Exception as error:
     st.exception(error)
     st.stop()
 
+
 action_queue = DATA["action_queue"]
 patient360 = DATA["patient360_development"]
 model_comparison = DATA["model_comparison"]
@@ -265,7 +488,7 @@ teleconsultation_linkage = DATA["teleconsultation_linkage"]
 
 
 # ============================================================
-# METRICS
+# GLOBAL METRICS
 # ============================================================
 
 def calculate_metrics():
@@ -300,9 +523,7 @@ def calculate_metrics():
 
         if len(labels):
             result["rate"] = (
-                result["ltfu"]
-                / result["episodes"]
-                * 100
+                result["ltfu"] / result["episodes"] * 100
             )
 
     return result
@@ -358,28 +579,55 @@ st.sidebar.success("Pipeline loaded")
 
 if page == "Overview":
 
-    st.header("Executive Care Continuity Overview")
+    title("Executive Care Continuity Overview")
+    subtitle(
+        "Development-cohort outcomes and evaluation episodes "
+        "available for follow-up prioritization."
+    )
 
     c1, c2, c3, c4, c5 = st.columns(5)
 
-    c1.metric("Patients", number(METRICS["patients"]))
-    c2.metric(
-        "Development Episodes",
-        number(METRICS["episodes"]),
-    )
-    c3.metric("LTFU Episodes", number(METRICS["ltfu"]))
-    c4.metric("LTFU Rate", percent(METRICS["rate"]))
-    c5.metric(
-        "Priority Actions",
-        number(len(action_queue)),
-    )
+    with c1:
+        metric_card(
+            "Unique Patients",
+            number(METRICS["patients"]),
+            "Patients represented in Patient 360 development data.",
+        )
+
+    with c2:
+        metric_card(
+            "Development Episodes",
+            number(METRICS["episodes"]),
+            "Episodes with known development outcomes.",
+        )
+
+    with c3:
+        metric_card(
+            "LTFU Episodes",
+            number(METRICS["ltfu"]),
+            "Development episodes labelled lost to follow-up.",
+        )
+
+    with c4:
+        metric_card(
+            "LTFU Rate",
+            percent(METRICS["rate"]),
+            "Historical development-cohort LTFU rate.",
+        )
+
+    with c5:
+        metric_card(
+            "Evaluation Episodes for Follow-Up",
+            number(len(action_queue)),
+            "Evaluation episodes available for prioritized action.",
+        )
 
     st.divider()
 
     left, right = st.columns(2)
 
     with left:
-        st.subheader("Care Journey Bottlenecks")
+        subsection("Care Journey Bottlenecks")
 
         if (
             not action_queue.empty
@@ -403,7 +651,7 @@ if page == "Overview":
         st.bar_chart(stages)
 
     with right:
-        st.subheader("Risk Distribution")
+        subsection("Risk Distribution")
 
         if (
             not action_queue.empty
@@ -429,7 +677,7 @@ if page == "Overview":
 
     st.divider()
 
-    st.subheader("Model Comparison")
+    subsection("Model Comparison")
 
     if not model_comparison.empty:
         st.dataframe(
@@ -438,11 +686,9 @@ if page == "Overview":
             hide_index=True,
         )
     else:
-        st.warning(
-            "Model comparison output is unavailable."
-        )
+        st.warning("Model comparison output is unavailable.")
 
-    st.subheader("Decision Signals")
+    subsection("Decision Signals")
 
     signals = []
 
@@ -453,18 +699,14 @@ if page == "Overview":
         )
 
     signals.append(
-        f"<strong>{len(action_queue):,}</strong> episodes are available "
-        "for prioritized follow-up."
+        f"<strong>{len(action_queue):,}</strong> evaluation episodes "
+        "are available for prioritized follow-up."
     )
 
     if not feature_importance.empty:
         feature_col = existing_column(
             feature_importance,
-            [
-                "feature",
-                "Feature",
-                "feature_name",
-            ],
+            ["feature", "Feature", "feature_name"],
         )
 
         if feature_col:
@@ -481,11 +723,7 @@ if page == "Overview":
 
     for signal in signals:
         st.markdown(
-            f"""
-            <div class="insight-box">
-                {signal}
-            </div>
-            """,
+            f'<div class="insight-box">{signal}</div>',
             unsafe_allow_html=True,
         )
 
@@ -496,18 +734,18 @@ if page == "Overview":
 
 elif page == "Patient 360":
 
-    st.header("Patient 360")
+    title("Patient 360")
+    subtitle(
+        "A consolidated view of patient context, episodes and "
+        "follow-up intelligence."
+    )
 
     if patient360.empty:
-        st.warning(
-            "Patient 360 data is unavailable."
-        )
+        st.warning("Patient 360 data is unavailable.")
         st.stop()
 
     if "patient_id" not in patient360.columns:
-        st.error(
-            "patient_id column is missing."
-        )
+        st.error("patient_id column is missing.")
         st.stop()
 
     patients = (
@@ -524,58 +762,48 @@ elif page == "Patient 360":
     )
 
     patient = patient360[
-        patient360["patient_id"].astype(str)
-        == selected_patient
+        patient360["patient_id"].astype(str) == selected_patient
     ].copy()
 
     if patient.empty:
-        st.warning(
-            "Patient record not found."
-        )
+        st.warning("Patient record not found.")
         st.stop()
 
     row = patient.iloc[-1]
 
     c1, c2, c3, c4 = st.columns(4)
 
-    c1.metric(
-        "Age",
-        safe_metric(
-            row.get(
-                "age_as_of_2026",
-                "N/A",
-            )
-        ),
-    )
+    with c1:
+        metric_card(
+            "Age",
+            safe_metric(row.get("age_as_of_2026", "N/A")),
+            "Age recorded for the selected patient.",
+        )
 
-    c2.metric(
-        "NCD Status",
-        safe_metric(
-            row.get(
-                "known_ncd_status",
-                "N/A",
-            )
-        ),
-    )
+    with c2:
+        metric_card(
+            "NCD Status",
+            safe_metric(row.get("known_ncd_status", "N/A")),
+            "Known NCD status available in Patient 360.",
+        )
 
-    c3.metric(
-        "Vulnerability",
-        safe_metric(
-            row.get(
-                "vulnerability_group",
-                "N/A",
-            )
-        ),
-    )
+    with c3:
+        metric_card(
+            "Vulnerability",
+            safe_metric(row.get("vulnerability_group", "N/A")),
+            "Recorded vulnerability grouping.",
+        )
 
-    c4.metric(
-        "Episodes",
-        number(len(patient)),
-    )
+    with c4:
+        metric_card(
+            "Teleconsultation Episodes",
+            number(len(patient)),
+            "Recorded episodes for this patient.",
+        )
 
     st.divider()
 
-    st.subheader("Patient Context")
+    subsection("Patient Context")
 
     context_columns = [
         "episode_id",
@@ -590,9 +818,7 @@ elif page == "Patient 360":
     ]
 
     available = [
-        col
-        for col in context_columns
-        if col in patient.columns
+        col for col in context_columns if col in patient.columns
     ]
 
     if available:
@@ -606,60 +832,51 @@ elif page == "Patient 360":
         not action_queue.empty
         and "patient_id" in action_queue.columns
     ):
-
         patient_actions = action_queue[
-            action_queue["patient_id"].astype(str)
-            == selected_patient
+            action_queue["patient_id"].astype(str) == selected_patient
         ].copy()
 
         if not patient_actions.empty:
-
-            st.subheader(
-                "Patient Risk Intelligence"
-            )
+            subsection("Patient Risk Intelligence")
 
             if "risk_probability" in patient_actions.columns:
-
-                patient_actions["risk_probability"] = (
-                    probability(
-                        patient_actions[
-                            "risk_probability"
-                        ]
-                    )
+                patient_actions["risk_probability"] = probability(
+                    patient_actions["risk_probability"]
                 )
 
                 highest = patient_actions.loc[
-                    patient_actions[
-                        "risk_probability"
-                    ].idxmax()
+                    patient_actions["risk_probability"].idxmax()
                 ]
 
                 a, b, c = st.columns(3)
 
-                a.metric(
-                    "Highest Risk",
-                    f"{highest['risk_probability']:.1%}",
-                )
+                with a:
+                    metric_card(
+                        "Highest Risk",
+                        f"{highest['risk_probability']:.1%}",
+                        "Highest episode-level risk probability.",
+                    )
 
-                b.metric(
-                    "Priority",
-                    safe_metric(
-                        highest.get(
-                            "priority_tier",
-                            "N/A",
-                        )
-                    ),
-                )
+                with b:
+                    metric_card(
+                        "Priority",
+                        safe_metric(
+                            highest.get("priority_tier", "N/A")
+                        ),
+                        "Operational follow-up priority.",
+                    )
 
-                c.metric(
-                    "Suggested Stage",
-                    safe_metric(
-                        highest.get(
-                            "predicted_dropout_stage",
-                            "N/A",
-                        )
-                    ),
-                )
+                with c:
+                    metric_card(
+                        "Suggested Stage",
+                        safe_metric(
+                            highest.get(
+                                "predicted_dropout_stage",
+                                "N/A",
+                            )
+                        ),
+                        "Heuristic stage suggestion from the action output.",
+                    )
 
 
 # ============================================================
@@ -668,36 +885,29 @@ elif page == "Patient 360":
 
 elif page == "Risk AI":
 
-    st.header("Risk AI")
-
-    st.caption(
+    title("Risk AI")
+    subtitle(
         "Explainable prioritization of episodes requiring "
         "follow-up attention."
     )
 
     if action_queue.empty:
-        st.warning(
-            "Risk data is unavailable."
-        )
+        st.warning("Risk data is unavailable.")
         st.stop()
 
     risk = action_queue.copy()
 
     if "risk_probability" in risk.columns:
-
         risk["risk_probability"] = probability(
             risk["risk_probability"]
         )
-
         risk = risk.sort_values(
             "risk_probability",
             ascending=False,
         )
 
     if "episode_id" not in risk.columns:
-        st.error(
-            "episode_id column is missing."
-        )
+        st.error("episode_id column is missing.")
         st.stop()
 
     episodes = (
@@ -713,86 +923,66 @@ elif page == "Risk AI":
     )
 
     selected = risk[
-        risk["episode_id"].astype(str)
-        == selected_episode
+        risk["episode_id"].astype(str) == selected_episode
     ]
 
     if selected.empty:
-        st.warning(
-            "Episode not found."
-        )
+        st.warning("Episode not found.")
         st.stop()
 
     row = selected.iloc[0]
 
     c1, c2, c3, c4 = st.columns(4)
 
-    c1.metric(
-        "Risk Probability",
-        f"{float(row.get('risk_probability', 0)):.1%}",
-    )
+    with c1:
+        metric_card(
+            "Risk Probability",
+            f"{float(row.get('risk_probability', 0)):.1%}",
+            "Model-estimated probability of LTFU.",
+        )
 
-    c2.metric(
-        "Priority",
-        safe_metric(
-            row.get(
-                "priority_tier",
-                "N/A",
-            )
-        ),
-    )
+    with c2:
+        metric_card(
+            "Priority",
+            safe_metric(row.get("priority_tier", "N/A")),
+            "Operational priority tier.",
+        )
 
-    c3.metric(
-        "Suggested Stage",
-        safe_metric(
-            row.get(
-                "predicted_dropout_stage",
-                "N/A",
-            )
-        ),
-    )
+    with c3:
+        metric_card(
+            "Suggested Stage",
+            safe_metric(
+                row.get("predicted_dropout_stage", "N/A")
+            ),
+            "Heuristic care-journey stage suggestion.",
+        )
 
-    c4.metric(
-        "Assigned Cadre",
-        safe_metric(
-            row.get(
-                "assigned_cadre",
-                "N/A",
-            )
-        ),
-    )
+    with c4:
+        metric_card(
+            "Assigned Cadre",
+            safe_metric(row.get("assigned_cadre", "N/A")),
+            "Suggested follow-up workforce cadre.",
+        )
 
     st.divider()
 
     left, right = st.columns(2)
 
     with left:
-
-        st.subheader(
-            "Why this episode needs attention"
-        )
+        subsection("Why This Episode Needs Attention")
 
         reason = text_value(
-            row.get(
-                "reason",
-                "",
-            ),
+            row.get("reason", ""),
             default="No explanation available.",
         )
 
         st.info(reason)
 
     with right:
-
-        st.subheader(
-            "Recommended Action"
-        )
+        subsection("Recommended Action")
 
         action = text_value(
-            row.get(
-                "recommended_action",
-                "",
-            ),
+            row.get("recommended_action", ""),
             default="No action recommendation available.",
         )
 
@@ -800,9 +990,7 @@ elif page == "Risk AI":
 
     st.divider()
 
-    st.subheader(
-        "Global Model Explainability"
-    )
+    subsection("Global Model Explainability")
 
     if not feature_importance.empty:
 
@@ -810,11 +998,7 @@ elif page == "Risk AI":
 
         feature_col = existing_column(
             fi,
-            [
-                "feature",
-                "Feature",
-                "feature_name",
-            ],
+            ["feature", "Feature", "feature_name"],
         )
 
         importance_col = existing_column(
@@ -835,9 +1019,7 @@ elif page == "Risk AI":
             )
 
             fi = (
-                fi.dropna(
-                    subset=[importance_col]
-                )
+                fi.dropna(subset=[importance_col])
                 .sort_values(
                     importance_col,
                     ascending=False,
@@ -847,9 +1029,7 @@ elif page == "Risk AI":
 
             if not fi.empty:
                 st.bar_chart(
-                    fi.set_index(feature_col)[
-                        importance_col
-                    ]
+                    fi.set_index(feature_col)[importance_col]
                 )
 
             st.caption(
@@ -858,7 +1038,6 @@ elif page == "Risk AI":
             )
 
         else:
-
             st.dataframe(
                 fi.head(20),
                 use_container_width=True,
@@ -866,10 +1045,7 @@ elif page == "Risk AI":
             )
 
     else:
-
-        st.info(
-            "Feature importance is unavailable."
-        )
+        st.info("Feature importance is unavailable.")
 
 
 # ============================================================
@@ -878,11 +1054,8 @@ elif page == "Risk AI":
 
 elif page == "Care Journey":
 
-    st.header(
-        "Care Journey Intelligence"
-    )
-
-    st.caption(
+    title("Care Journey Intelligence")
+    subtitle(
         "Locate operational bottlenecks between consultation "
         "and completed care."
     )
@@ -891,22 +1064,15 @@ elif page == "Care Journey":
         not action_queue.empty
         and "predicted_dropout_stage" in action_queue.columns
     ):
-
         stages = (
-            action_queue[
-                "predicted_dropout_stage"
-            ]
+            action_queue["predicted_dropout_stage"]
             .dropna()
             .astype(str)
             .value_counts()
             .rename_axis("Stage")
-            .reset_index(
-                name="Episodes"
-            )
+            .reset_index(name="Episodes")
         )
-
     else:
-
         stages = pd.DataFrame(
             {
                 "Stage": [
@@ -914,11 +1080,7 @@ elif page == "Care Journey":
                     "Review not attended",
                     "Test not completed",
                 ],
-                "Episodes": [
-                    1170,
-                    543,
-                    275,
-                ],
+                "Episodes": [1170, 543, 275],
             }
         )
 
@@ -926,20 +1088,14 @@ elif page == "Care Journey":
 
     if total:
         stages["Share"] = (
-            stages["Episodes"]
-            / total
-            * 100
+            stages["Episodes"] / total * 100
         )
 
     st.bar_chart(
-        stages.set_index("Stage")[
-            "Episodes"
-        ]
+        stages.set_index("Stage")["Episodes"]
     )
 
-    st.subheader(
-        "Care Journey"
-    )
+    subsection("Care Journey")
 
     journey = pd.DataFrame(
         {
@@ -973,21 +1129,15 @@ elif page == "Care Journey":
 
 elif page == "Data Hub":
 
-    st.header(
-        "Data Hub"
-    )
-
-    st.caption(
+    title("Data Hub")
+    subtitle(
         "Upload regional CSV/XLSX data and validate it before "
         "downstream processing."
     )
 
     uploaded = st.file_uploader(
         "Upload regional dataset",
-        type=[
-            "csv",
-            "xlsx",
-        ],
+        type=["csv", "xlsx"],
     )
 
     if uploaded is None:
@@ -999,16 +1149,9 @@ elif page == "Data Hub":
 
         source_rows = []
 
-        for filename in (
-            REQUIRED_FILES
-            + OPTIONAL_FILES
-        ):
-
+        for filename in REQUIRED_FILES + OPTIONAL_FILES:
             df = DATA.get(
-                filename.replace(
-                    ".csv",
-                    "",
-                ),
+                filename.replace(".csv", ""),
                 pd.DataFrame(),
             )
 
@@ -1022,9 +1165,7 @@ elif page == "Data Hub":
             )
 
         st.dataframe(
-            pd.DataFrame(
-                source_rows
-            ),
+            pd.DataFrame(source_rows),
             use_container_width=True,
             hide_index=True,
         )
@@ -1032,108 +1173,69 @@ elif page == "Data Hub":
     else:
 
         try:
-
-            if uploaded.name.lower().endswith(
-                ".csv"
-            ):
-
-                uploaded_df = pd.read_csv(
-                    uploaded
-                )
-
+            if uploaded.name.lower().endswith(".csv"):
+                uploaded_df = pd.read_csv(uploaded)
             else:
-
-                uploaded_df = pd.read_excel(
-                    uploaded
-                )
+                uploaded_df = pd.read_excel(uploaded)
 
         except Exception as error:
-
-            st.error(
-                "Could not read uploaded dataset."
-            )
-
+            st.error("Could not read uploaded dataset.")
             st.exception(error)
             st.stop()
 
         if uploaded_df.empty:
-
-            st.warning(
-                "Uploaded dataset is empty."
-            )
-
+            st.warning("Uploaded dataset is empty.")
             st.stop()
 
-        st.success(
-            f"Loaded {uploaded.name}"
-        )
+        st.success(f"Loaded {uploaded.name}")
 
         c1, c2, c3, c4 = st.columns(4)
 
-        c1.metric(
-            "Rows",
-            number(
-                len(uploaded_df)
-            ),
-        )
+        with c1:
+            metric_card("Rows", number(len(uploaded_df)))
 
-        c2.metric(
-            "Columns",
-            number(
-                len(uploaded_df.columns)
-            ),
-        )
+        with c2:
+            metric_card(
+                "Columns",
+                number(len(uploaded_df.columns)),
+            )
 
-        c3.metric(
-            "Duplicates",
-            number(
-                uploaded_df.duplicated().sum()
-            ),
-        )
+        with c3:
+            metric_card(
+                "Duplicates",
+                number(uploaded_df.duplicated().sum()),
+            )
 
-        c4.metric(
-            "Missing Cells",
-            number(
-                uploaded_df.isna()
-                .sum()
-                .sum()
-            ),
-        )
+        with c4:
+            metric_card(
+                "Missing Cells",
+                number(
+                    uploaded_df.isna().sum().sum()
+                ),
+            )
 
         st.divider()
 
-        st.subheader(
-            "Schema Compatibility"
-        )
+        subsection("Schema Compatibility")
 
         expected = (
-            set(
-                model_features.columns
-            )
+            set(model_features.columns)
             if not model_features.empty
             else set()
         )
 
-        uploaded_columns = set(
-            uploaded_df.columns
-        )
+        uploaded_columns = set(uploaded_df.columns)
 
         matching = sorted(
-            expected.intersection(
-                uploaded_columns
-            )
+            expected.intersection(uploaded_columns)
         )
 
         missing = sorted(
-            expected.difference(
-                uploaded_columns
-            )
+            expected.difference(uploaded_columns)
         )
 
         additional = sorted(
-            uploaded_columns.difference(
-                expected
-            )
+            uploaded_columns.difference(expected)
         )
 
         schema = pd.DataFrame(
@@ -1158,31 +1260,25 @@ elif page == "Data Hub":
         )
 
         if matching:
-
             st.success(
                 f"{len(matching)} columns match the "
                 "current feature schema."
             )
 
         if missing:
-
             st.warning(
                 "The uploaded dataset is not directly compatible "
                 "with the current model schema. Mapping and "
                 "preprocessing are required before inference."
             )
 
-        st.subheader(
-            "Missingness Profile"
-        )
+        subsection("Missingness Profile")
 
         missingness = (
             uploaded_df.isna()
             .mean()
             .mul(100)
-            .sort_values(
-                ascending=False
-            )
+            .sort_values(ascending=False)
             .reset_index()
         )
 
@@ -1197,9 +1293,7 @@ elif page == "Data Hub":
             hide_index=True,
         )
 
-        st.subheader(
-            "Dataset Preview"
-        )
+        subsection("Dataset Preview")
 
         st.dataframe(
             uploaded_df.head(100),
@@ -1208,7 +1302,6 @@ elif page == "Data Hub":
         )
 
         csv_buffer = io.StringIO()
-
         uploaded_df.to_csv(
             csv_buffer,
             index=False,
@@ -1219,10 +1312,7 @@ elif page == "Data Hub":
             data=csv_buffer.getvalue(),
             file_name=(
                 "validated_"
-                + uploaded.name.rsplit(
-                    ".",
-                    1,
-                )[0]
+                + uploaded.name.rsplit(".", 1)[0]
                 + ".csv"
             ),
             mime="text/csv",
@@ -1235,35 +1325,24 @@ elif page == "Data Hub":
 
 elif page == "Workforce":
 
-    st.header(
-        "Workforce Intelligence"
-    )
-
-    st.caption(
+    title("Workforce Intelligence")
+    subtitle(
         "Translate follow-up risk into operational workload "
         "and capacity signals."
     )
 
     if action_queue.empty:
-
-        st.warning(
-            "Action queue unavailable."
-        )
-
+        st.warning("Action queue unavailable.")
         st.stop()
 
     if "assigned_cadre" not in action_queue.columns:
 
-        st.info(
-            "Cadre information unavailable."
-        )
+        st.info("Cadre information unavailable.")
 
     else:
 
         cadre = (
-            action_queue[
-                "assigned_cadre"
-            ]
+            action_queue["assigned_cadre"]
             .fillna("Unassigned")
             .astype(str)
             .value_counts()
@@ -1272,44 +1351,28 @@ elif page == "Workforce":
         left, right = st.columns(2)
 
         with left:
-
-            st.subheader(
-                "Workload by Cadre"
-            )
-
+            subsection("Workload by Cadre")
             st.bar_chart(cadre)
 
         with right:
-
-            st.subheader(
-                "High-Priority Workload"
-            )
+            subsection("High-Priority Workload")
 
             if "priority_tier" in action_queue.columns:
 
                 high = action_queue[
-                    action_queue[
-                        "priority_tier"
-                    ].isin(
-                        [
-                            "HIGH",
-                            "VERY HIGH",
-                        ]
+                    action_queue["priority_tier"].isin(
+                        ["HIGH", "VERY HIGH"]
                     )
                 ]
 
                 high_cadre = (
-                    high[
-                        "assigned_cadre"
-                    ]
+                    high["assigned_cadre"]
                     .fillna("Unassigned")
                     .astype(str)
                     .value_counts()
                 )
 
-                st.bar_chart(
-                    high_cadre
-                )
+                st.bar_chart(high_cadre)
 
         st.info(
             "This is capacity-planning intelligence, not an "
@@ -1323,11 +1386,8 @@ elif page == "Workforce":
 
 elif page == "Medicines":
 
-    st.header(
-        "Medicine Intelligence"
-    )
-
-    st.caption(
+    title("Medicine Intelligence")
+    subtitle(
         "Operational visibility into medicine-related "
         "continuity gaps."
     )
@@ -1339,14 +1399,10 @@ elif page == "Medicines":
 
     if (
         not action_queue.empty
-        and "predicted_dropout_stage"
-        in action_queue.columns
+        and "predicted_dropout_stage" in action_queue.columns
     ):
-
         medicine_actions = action_queue[
-            action_queue[
-                "predicted_dropout_stage"
-            ]
+            action_queue["predicted_dropout_stage"]
             .astype(str)
             .str.contains(
                 "medicine",
@@ -1354,63 +1410,42 @@ elif page == "Medicines":
                 na=False,
             )
         ]
-
     else:
-
         medicine_actions = pd.DataFrame()
 
     if (
         not patient360.empty
-        and "medicine_advised"
-        in patient360.columns
+        and "medicine_advised" in patient360.columns
     ):
-
         medicine_required = (
-            patient360[
-                "medicine_advised"
-            ]
+            patient360["medicine_advised"]
             .astype(str)
             .str.lower()
-            .isin(
-                [
-                    "yes",
-                    "true",
-                    "1",
-                ]
-            )
+            .isin(["yes", "true", "1"])
             .sum()
         )
-
     else:
-
         medicine_required = 0
 
     c1, c2, c3 = st.columns(3)
 
-    c1.metric(
-        "Medicine-related Actions",
-        number(
-            len(
-                medicine_actions
-            )
-        ),
-    )
+    with c1:
+        metric_card(
+            "Medicine-Related Actions",
+            number(len(medicine_actions)),
+        )
 
-    c2.metric(
-        "Dispensing Records",
-        number(
-            len(
-                dispensing
-            )
-        ),
-    )
+    with c2:
+        metric_card(
+            "Dispensing Records",
+            number(len(dispensing)),
+        )
 
-    c3.metric(
-        "Medicine Advised",
-        number(
-            medicine_required
-        ),
-    )
+    with c3:
+        metric_card(
+            "Medicine Advised",
+            number(medicine_required),
+        )
 
     st.divider()
 
@@ -1431,15 +1466,12 @@ elif page == "Medicines":
         ]
 
         st.dataframe(
-            medicine_actions[
-                columns
-            ],
+            medicine_actions[columns],
             use_container_width=True,
             hide_index=True,
         )
 
     else:
-
         st.info(
             "No medicine-related actions are available."
         )
@@ -1456,16 +1488,14 @@ elif page == "Medicines":
 
 elif page == "Action Queue":
 
-    st.header(
-        "Prioritized Action Queue"
+    title("Prioritized Action Queue")
+    subtitle(
+        "Filter and review evaluation episodes according to "
+        "risk, suggested stage and assigned cadre."
     )
 
     if action_queue.empty:
-
-        st.warning(
-            "Action queue unavailable."
-        )
-
+        st.warning("Action queue unavailable.")
         st.stop()
 
     queue = action_queue.copy()
@@ -1475,9 +1505,7 @@ elif page == "Action Queue":
     if "priority_tier" in queue.columns:
 
         values = sorted(
-            queue[
-                "priority_tier"
-            ]
+            queue["priority_tier"]
             .dropna()
             .astype(str)
             .unique()
@@ -1490,23 +1518,16 @@ elif page == "Action Queue":
         )
 
         if selected_priority:
-
             queue = queue[
-                queue[
-                    "priority_tier"
-                ]
+                queue["priority_tier"]
                 .astype(str)
-                .isin(
-                    selected_priority
-                )
+                .isin(selected_priority)
             ]
 
     if "assigned_cadre" in queue.columns:
 
         values = sorted(
-            queue[
-                "assigned_cadre"
-            ]
+            queue["assigned_cadre"]
             .dropna()
             .astype(str)
             .unique()
@@ -1519,26 +1540,16 @@ elif page == "Action Queue":
         )
 
         if selected_cadre:
-
             queue = queue[
-                queue[
-                    "assigned_cadre"
-                ]
+                queue["assigned_cadre"]
                 .astype(str)
-                .isin(
-                    selected_cadre
-                )
+                .isin(selected_cadre)
             ]
 
-    if (
-        "predicted_dropout_stage"
-        in queue.columns
-    ):
+    if "predicted_dropout_stage" in queue.columns:
 
         values = sorted(
-            queue[
-                "predicted_dropout_stage"
-            ]
+            queue["predicted_dropout_stage"]
             .dropna()
             .astype(str)
             .unique()
@@ -1551,25 +1562,16 @@ elif page == "Action Queue":
         )
 
         if selected_stage:
-
             queue = queue[
-                queue[
-                    "predicted_dropout_stage"
-                ]
+                queue["predicted_dropout_stage"]
                 .astype(str)
-                .isin(
-                    selected_stage
-                )
+                .isin(selected_stage)
             ]
 
     if "risk_probability" in queue.columns:
 
-        queue[
-            "risk_probability"
-        ] = probability(
-            queue[
-                "risk_probability"
-            ]
+        queue["risk_probability"] = probability(
+            queue["risk_probability"]
         )
 
         queue = queue.sort_values(
@@ -1577,11 +1579,10 @@ elif page == "Action Queue":
             ascending=False,
         )
 
-    st.metric(
+    metric_card(
         "Visible Actions",
-        number(
-            len(queue)
-        ),
+        number(len(queue)),
+        "Actions remaining after the selected filters.",
     )
 
     columns = [
@@ -1596,15 +1597,11 @@ elif page == "Action Queue":
     ]
 
     columns = [
-        col
-        for col in columns
-        if col in queue.columns
+        col for col in columns if col in queue.columns
     ]
 
     st.dataframe(
-        queue[
-            columns
-        ],
+        queue[columns],
         use_container_width=True,
         height=620,
         hide_index=True,
@@ -1612,12 +1609,8 @@ elif page == "Action Queue":
 
     st.download_button(
         "Download Action Queue",
-        data=queue[
-            columns
-        ]
-        .to_csv(
-            index=False
-        )
+        data=queue[columns]
+        .to_csv(index=False)
         .encode("utf-8"),
         file_name="priority_action_queue.csv",
         mime="text/csv",
@@ -1630,26 +1623,20 @@ elif page == "Action Queue":
 
 elif page == "Monitoring":
 
-    st.header(
-        "Data & Model Monitoring"
+    title("Data & Model Monitoring")
+    subtitle(
+        "Monitor dataset availability, linkage coverage and "
+        "model-output readiness."
     )
 
-    st.subheader(
-        "Dataset Availability"
-    )
+    subsection("Dataset Availability")
 
     rows = []
 
-    for filename in (
-        REQUIRED_FILES
-        + OPTIONAL_FILES
-    ):
+    for filename in REQUIRED_FILES + OPTIONAL_FILES:
 
         df = DATA.get(
-            filename.replace(
-                ".csv",
-                "",
-            ),
+            filename.replace(".csv", ""),
             pd.DataFrame(),
         )
 
@@ -1672,20 +1659,13 @@ elif page == "Monitoring":
 
     st.divider()
 
-    st.subheader(
-        "Patient Linkage"
-    )
+    subsection("Patient Linkage")
 
     if not teleconsultation_linkage.empty:
 
-        total = len(
-            teleconsultation_linkage
-        )
+        total = len(teleconsultation_linkage)
 
-        if (
-            "predicted_patient_id"
-            in teleconsultation_linkage.columns
-        ):
+        if "predicted_patient_id" in teleconsultation_linkage.columns:
 
             linked = (
                 teleconsultation_linkage[
@@ -1702,20 +1682,23 @@ elif page == "Monitoring":
             )
 
         else:
-
             coverage = 0
 
         c1, c2 = st.columns(2)
 
-        c1.metric(
-            "Linkage Records",
-            number(total),
-        )
+        with c1:
+            metric_card(
+                "Linkage Records",
+                number(total),
+                "Teleconsultation records evaluated by linkage.",
+            )
 
-        c2.metric(
-            "Computational Linkage Coverage",
-            percent(coverage),
-        )
+        with c2:
+            metric_card(
+                "Computational Linkage Coverage",
+                percent(coverage),
+                "Algorithmic coverage, not independently validated identity accuracy.",
+            )
 
         st.caption(
             "Coverage represents algorithmic linkage coverage, "
@@ -1723,16 +1706,11 @@ elif page == "Monitoring":
         )
 
     else:
-
-        st.info(
-            "Linkage output unavailable."
-        )
+        st.info("Linkage output unavailable.")
 
     st.divider()
 
-    st.subheader(
-        "Model Output Status"
-    )
+    subsection("Model Output Status")
 
     status = pd.DataFrame(
         {
