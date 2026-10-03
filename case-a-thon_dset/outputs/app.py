@@ -681,14 +681,14 @@ def horizontal_bars(series, value_suffix="", max_items=10):
         left, right = st.columns([5.5, 1])
         with left:
             st.markdown(
-                f"<div class="bar-label-clean">{html.escape(str(label))}</div>",
+                f'<div class="bar-label-clean">{html.escape(str(label))}</div>',
                 unsafe_allow_html=True,
             )
             st.progress(ratio)
 
         with right:
             st.markdown(
-                f"<div class="bar-value-clean">{numeric:,.2f}{value_suffix}</div>",
+                f'<div class="bar-value-clean">{numeric:,.2f}{value_suffix}</div>',
                 unsafe_allow_html=True,
             )
 
