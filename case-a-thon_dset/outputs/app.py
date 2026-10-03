@@ -1,10 +1,11 @@
+from pathlib import Path
+
+code = r'''
 import io
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 import streamlit as st
-
 
 # ============================================================
 # CONFIG
@@ -49,8 +50,8 @@ OPTIONAL_FILES = [
     "eda_age.csv",
     "eda_gender.csv",
     "eda_language.csv",
+    "medicine_dispensing.csv",
 ]
-
 
 # ============================================================
 # STYLE
@@ -60,42 +61,109 @@ st.markdown(
     """
     <style>
     .block-container {
-        padding-top: 1.4rem;
-        padding-bottom: 2rem;
-        max-width: 1500px;
+        padding-top: 2rem !important;
+        padding-bottom: 3rem !important;
+        max-width: 1500px !important;
     }
 
     .app-title {
-        font-size: 2.15rem;
-        font-weight: 700;
-        margin-bottom: 0.1rem;
+        color: #F8FAFC !important;
+        font-size: 2.35rem !important;
+        font-weight: 750 !important;
+        line-height: 1.2 !important;
+        margin: 0 0 0.35rem 0 !important;
+        overflow: visible !important;
     }
 
     .app-subtitle {
-        color: #64748b;
-        font-size: 1rem;
-        margin-bottom: 1.2rem;
+        color: #94A3B8 !important;
+        font-size: 1.02rem !important;
+        line-height: 1.5 !important;
+        margin: 0 0 1.7rem 0 !important;
     }
 
-    .insight-box {
-        padding: 1rem;
-        border: 1px solid #dbe3ea;
-        border-radius: 10px;
-        background: #f8fafc;
-        margin-bottom: 0.7rem;
+    h1, h2, h3, h4 {
+        color: #F8FAFC !important;
+        line-height: 1.3 !important;
+        overflow: visible !important;
     }
 
     div[data-testid="stMetric"] {
-        border: 1px solid #e2e8f0;
-        border-radius: 10px;
-        padding: 0.75rem;
-        background: white;
+        background: #FFFFFF !important;
+        border: 1px solid #E2E8F0 !important;
+        border-radius: 14px !important;
+        padding: 1rem 1.15rem !important;
+        min-height: 112px !important;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.10) !important;
+        overflow: visible !important;
+    }
+
+    div[data-testid="stMetricLabel"],
+    div[data-testid="stMetricLabel"] p {
+        color: #475569 !important;
+        opacity: 1 !important;
+        -webkit-text-fill-color: #475569 !important;
+        font-weight: 600 !important;
+        font-size: 0.88rem !important;
+    }
+
+    div[data-testid="stMetricValue"],
+    div[data-testid="stMetricValue"] div {
+        color: #0F172A !important;
+        opacity: 1 !important;
+        -webkit-text-fill-color: #0F172A !important;
+        font-weight: 750 !important;
+        line-height: 1.2 !important;
+        font-size: 1.85rem !important;
+    }
+
+    div[data-testid="stMetricDelta"],
+    div[data-testid="stMetricDelta"] p {
+        opacity: 1 !important;
+    }
+
+    .insight-box {
+        background: #FFFFFF !important;
+        color: #0F172A !important;
+        border: 1px solid #CBD5E1 !important;
+        border-radius: 12px !important;
+        padding: 1rem 1.15rem !important;
+        margin: 0.55rem 0 !important;
+        box-shadow: 0 2px 7px rgba(15, 23, 42, 0.06) !important;
+        line-height: 1.55 !important;
+    }
+
+    .insight-box strong {
+        color: #0F172A !important;
+    }
+
+    div[data-testid="stAlert"] {
+        border-radius: 12px !important;
+    }
+
+    div[data-testid="stDataFrame"] {
+        border-radius: 10px !important;
+        overflow: hidden !important;
+    }
+
+    section[data-testid="stSidebar"] {
+        border-right: 1px solid #334155 !important;
+    }
+
+    @media (max-width: 900px) {
+        .app-title {
+            font-size: 1.9rem !important;
+        }
+
+        div[data-testid="stMetricValue"],
+        div[data-testid="stMetricValue"] div {
+            font-size: 1.55rem !important;
+        }
     }
     </style>
     """,
     unsafe_allow_html=True,
 )
-
 
 # ============================================================
 # HELPERS
@@ -103,7 +171,6 @@ st.markdown(
 
 def read_csv(filename):
     path = OUTPUT_DIR / filename
-
     if not path.exists():
         return pd.DataFrame()
 
@@ -136,7 +203,6 @@ def percent(value):
 
 def probability(series):
     values = pd.to_numeric(series, errors="coerce")
-
     if values.dropna().empty:
         return values
 
@@ -146,19 +212,24 @@ def probability(series):
     return values.clip(0, 1)
 
 
-def text_value(value):
+def text_value(value, default="N/A"):
     if pd.isna(value):
-        return ""
-    return str(value).strip()
+        return default
+
+    value = str(value).strip()
+    return value if value else default
+
+
+def safe_metric(value, default="N/A"):
+    return text_value(value, default)
 
 
 # ============================================================
-# LOAD ALL PROJECT OUTPUTS
+# LOAD PROJECT OUTPUTS
 # ============================================================
 
 @st.cache_data(show_spinner=False)
 def load_all_data():
-
     missing = [
         file
         for file in REQUIRED_FILES
@@ -167,8 +238,7 @@ def load_all_data():
 
     if missing:
         raise FileNotFoundError(
-            "Missing required files: "
-            + ", ".join(missing)
+            "Missing required files: " + ", ".join(missing)
         )
 
     datasets = {}
@@ -181,12 +251,10 @@ def load_all_data():
 
 try:
     DATA = load_all_data()
-
 except Exception as error:
     st.error("Application data could not be loaded.")
     st.exception(error)
     st.stop()
-
 
 action_queue = DATA["action_queue"]
 patient360 = DATA["patient360_development"]
@@ -204,7 +272,6 @@ teleconsultation_linkage = DATA["teleconsultation_linkage"]
 # ============================================================
 
 def calculate_metrics():
-
     result = {
         "patients": 0,
         "episodes": 0,
@@ -226,7 +293,6 @@ def calculate_metrics():
     )
 
     if label_col:
-
         labels = pd.to_numeric(
             model_features[label_col],
             errors="coerce",
@@ -285,11 +351,8 @@ page = st.sidebar.radio(
 )
 
 st.sidebar.divider()
-
 st.sidebar.caption("Application Status")
-
-if action_queue is not None:
-    st.sidebar.success("Pipeline loaded")
+st.sidebar.success("Pipeline loaded")
 
 
 # ============================================================
@@ -302,26 +365,13 @@ if page == "Overview":
 
     c1, c2, c3, c4, c5 = st.columns(5)
 
-    c1.metric(
-        "Patients",
-        number(METRICS["patients"]),
-    )
-
+    c1.metric("Patients", number(METRICS["patients"]))
     c2.metric(
         "Development Episodes",
         number(METRICS["episodes"]),
     )
-
-    c3.metric(
-        "LTFU Episodes",
-        number(METRICS["ltfu"]),
-    )
-
-    c4.metric(
-        "LTFU Rate",
-        percent(METRICS["rate"]),
-    )
-
+    c3.metric("LTFU Episodes", number(METRICS["ltfu"]))
+    c4.metric("LTFU Rate", percent(METRICS["rate"]))
     c5.metric(
         "Priority Actions",
         number(len(action_queue)),
@@ -332,25 +382,19 @@ if page == "Overview":
     left, right = st.columns(2)
 
     with left:
-
         st.subheader("Care Journey Bottlenecks")
 
         if (
             not action_queue.empty
             and "predicted_dropout_stage" in action_queue.columns
         ):
-
             stages = (
                 action_queue["predicted_dropout_stage"]
                 .dropna()
                 .astype(str)
                 .value_counts()
             )
-
-            st.bar_chart(stages)
-
         else:
-
             stages = pd.Series(
                 {
                     "Medicine not collected": 1170,
@@ -359,17 +403,15 @@ if page == "Overview":
                 }
             )
 
-            st.bar_chart(stages)
+        st.bar_chart(stages)
 
     with right:
-
         st.subheader("Risk Distribution")
 
         if (
             not action_queue.empty
             and "priority_tier" in action_queue.columns
         ):
-
             risk = (
                 action_queue["priority_tier"]
                 .value_counts()
@@ -383,23 +425,22 @@ if page == "Overview":
                     fill_value=0,
                 )
             )
+        else:
+            risk = pd.Series(dtype="int64")
 
-            st.bar_chart(risk)
+        st.bar_chart(risk)
 
     st.divider()
 
     st.subheader("Model Comparison")
 
     if not model_comparison.empty:
-
         st.dataframe(
             model_comparison,
             use_container_width=True,
             hide_index=True,
         )
-
     else:
-
         st.warning(
             "Model comparison output is unavailable."
         )
@@ -409,19 +450,17 @@ if page == "Overview":
     signals = []
 
     if METRICS["rate"]:
-
         signals.append(
-            f"{METRICS['rate']:.2f}% of development episodes "
-            "were labelled lost to follow-up."
+            f"<strong>{METRICS['rate']:.2f}%</strong> of development "
+            "episodes were labelled lost to follow-up."
         )
 
     signals.append(
-        f"{len(action_queue):,} episodes are available "
+        f"<strong>{len(action_queue):,}</strong> episodes are available "
         "for prioritized follow-up."
     )
 
     if not feature_importance.empty:
-
         feature_col = existing_column(
             feature_importance,
             [
@@ -432,20 +471,18 @@ if page == "Overview":
         )
 
         if feature_col:
-
             top_feature = text_value(
-                feature_importance.iloc[0][feature_col]
+                feature_importance.iloc[0][feature_col],
+                default="",
             )
 
             if top_feature:
-
                 signals.append(
-                    f"The leading global model feature is "
-                    f"'{top_feature}'."
+                    "The leading global model feature is "
+                    f"<strong>{top_feature}</strong>."
                 )
 
     for signal in signals:
-
         st.markdown(
             f"""
             <div class="insight-box">
@@ -465,14 +502,12 @@ elif page == "Patient 360":
     st.header("Patient 360")
 
     if patient360.empty:
-
         st.warning(
             "Patient 360 data is unavailable."
         )
         st.stop()
 
     if "patient_id" not in patient360.columns:
-
         st.error(
             "patient_id column is missing."
         )
@@ -497,7 +532,6 @@ elif page == "Patient 360":
     ].copy()
 
     if patient.empty:
-
         st.warning(
             "Patient record not found."
         )
@@ -509,17 +543,32 @@ elif page == "Patient 360":
 
     c1.metric(
         "Age",
-        str(row.get("age_as_of_2026", "N/A")),
+        safe_metric(
+            row.get(
+                "age_as_of_2026",
+                "N/A",
+            )
+        ),
     )
 
     c2.metric(
         "NCD Status",
-        str(row.get("known_ncd_status", "N/A")),
+        safe_metric(
+            row.get(
+                "known_ncd_status",
+                "N/A",
+            )
+        ),
     )
 
     c3.metric(
         "Vulnerability",
-        str(row.get("vulnerability_group", "N/A")),
+        safe_metric(
+            row.get(
+                "vulnerability_group",
+                "N/A",
+            )
+        ),
     )
 
     c4.metric(
@@ -550,7 +599,6 @@ elif page == "Patient 360":
     ]
 
     if available:
-
         st.dataframe(
             patient[available],
             use_container_width=True,
@@ -598,7 +646,7 @@ elif page == "Patient 360":
 
                 b.metric(
                     "Priority",
-                    str(
+                    safe_metric(
                         highest.get(
                             "priority_tier",
                             "N/A",
@@ -608,7 +656,7 @@ elif page == "Patient 360":
 
                 c.metric(
                     "Suggested Stage",
-                    str(
+                    safe_metric(
                         highest.get(
                             "predicted_dropout_stage",
                             "N/A",
@@ -631,7 +679,6 @@ elif page == "Risk AI":
     )
 
     if action_queue.empty:
-
         st.warning(
             "Risk data is unavailable."
         )
@@ -651,7 +698,6 @@ elif page == "Risk AI":
         )
 
     if "episode_id" not in risk.columns:
-
         st.error(
             "episode_id column is missing."
         )
@@ -675,7 +721,6 @@ elif page == "Risk AI":
     ]
 
     if selected.empty:
-
         st.warning(
             "Episode not found."
         )
@@ -692,12 +737,17 @@ elif page == "Risk AI":
 
     c2.metric(
         "Priority",
-        str(row.get("priority_tier", "N/A")),
+        safe_metric(
+            row.get(
+                "priority_tier",
+                "N/A",
+            )
+        ),
     )
 
     c3.metric(
         "Suggested Stage",
-        str(
+        safe_metric(
             row.get(
                 "predicted_dropout_stage",
                 "N/A",
@@ -707,7 +757,7 @@ elif page == "Risk AI":
 
     c4.metric(
         "Assigned Cadre",
-        str(
+        safe_metric(
             row.get(
                 "assigned_cadre",
                 "N/A",
@@ -726,14 +776,14 @@ elif page == "Risk AI":
         )
 
         reason = text_value(
-            row.get("reason", "")
+            row.get(
+                "reason",
+                "",
+            ),
+            default="No explanation available.",
         )
 
-        st.info(
-            reason
-            if reason
-            else "No explanation available."
-        )
+        st.info(reason)
 
     with right:
 
@@ -745,18 +795,11 @@ elif page == "Risk AI":
             row.get(
                 "recommended_action",
                 "",
-            )
+            ),
+            default="No action recommendation available.",
         )
 
-        if action:
-
-            st.success(action)
-
-        else:
-
-            st.info(
-                "No action recommendation available."
-            )
+        st.success(action)
 
     st.divider()
 
@@ -805,11 +848,12 @@ elif page == "Risk AI":
                 .head(12)
             )
 
-            st.bar_chart(
-                fi.set_index(feature_col)[
-                    importance_col
-                ]
-            )
+            if not fi.empty:
+                st.bar_chart(
+                    fi.set_index(feature_col)[
+                        importance_col
+                    ]
+                )
 
             st.caption(
                 "Global feature importance from the generated "
@@ -837,7 +881,9 @@ elif page == "Risk AI":
 
 elif page == "Care Journey":
 
-    st.header("Care Journey Intelligence")
+    st.header(
+        "Care Journey Intelligence"
+    )
 
     st.caption(
         "Locate operational bottlenecks between consultation "
@@ -857,7 +903,9 @@ elif page == "Care Journey":
             .astype(str)
             .value_counts()
             .rename_axis("Stage")
-            .reset_index(name="Episodes")
+            .reset_index(
+                name="Episodes"
+            )
         )
 
     else:
@@ -880,7 +928,6 @@ elif page == "Care Journey":
     total = stages["Episodes"].sum()
 
     if total:
-
         stages["Share"] = (
             stages["Episodes"]
             / total
@@ -893,7 +940,9 @@ elif page == "Care Journey":
         ]
     )
 
-    st.subheader("Care Journey")
+    st.subheader(
+        "Care Journey"
+    )
 
     journey = pd.DataFrame(
         {
@@ -927,7 +976,9 @@ elif page == "Care Journey":
 
 elif page == "Data Hub":
 
-    st.header("Data Hub")
+    st.header(
+        "Data Hub"
+    )
 
     st.caption(
         "Upload regional CSV/XLSX data and validate it before "
@@ -936,7 +987,10 @@ elif page == "Data Hub":
 
     uploaded = st.file_uploader(
         "Upload regional dataset",
-        type=["csv", "xlsx"],
+        type=[
+            "csv",
+            "xlsx",
+        ],
     )
 
     if uploaded is None:
@@ -948,10 +1002,16 @@ elif page == "Data Hub":
 
         source_rows = []
 
-        for filename in REQUIRED_FILES + OPTIONAL_FILES:
+        for filename in (
+            REQUIRED_FILES
+            + OPTIONAL_FILES
+        ):
 
             df = DATA.get(
-                filename.replace(".csv", ""),
+                filename.replace(
+                    ".csv",
+                    "",
+                ),
                 pd.DataFrame(),
             )
 
@@ -965,7 +1025,9 @@ elif page == "Data Hub":
             )
 
         st.dataframe(
-            pd.DataFrame(source_rows),
+            pd.DataFrame(
+                source_rows
+            ),
             use_container_width=True,
             hide_index=True,
         )
@@ -974,7 +1036,9 @@ elif page == "Data Hub":
 
         try:
 
-            if uploaded.name.lower().endswith(".csv"):
+            if uploaded.name.lower().endswith(
+                ".csv"
+            ):
 
                 uploaded_df = pd.read_csv(
                     uploaded
@@ -1000,6 +1064,7 @@ elif page == "Data Hub":
             st.warning(
                 "Uploaded dataset is empty."
             )
+
             st.stop()
 
         st.success(
@@ -1010,12 +1075,16 @@ elif page == "Data Hub":
 
         c1.metric(
             "Rows",
-            number(len(uploaded_df)),
+            number(
+                len(uploaded_df)
+            ),
         )
 
         c2.metric(
             "Columns",
-            number(len(uploaded_df.columns)),
+            number(
+                len(uploaded_df.columns)
+            ),
         )
 
         c3.metric(
@@ -1040,9 +1109,13 @@ elif page == "Data Hub":
             "Schema Compatibility"
         )
 
-        expected = set(
-            model_features.columns
-        ) if not model_features.empty else set()
+        expected = (
+            set(
+                model_features.columns
+            )
+            if not model_features.empty
+            else set()
+        )
 
         uploaded_columns = set(
             uploaded_df.columns
@@ -1149,7 +1222,10 @@ elif page == "Data Hub":
             data=csv_buffer.getvalue(),
             file_name=(
                 "validated_"
-                + uploaded.name.rsplit(".", 1)[0]
+                + uploaded.name.rsplit(
+                    ".",
+                    1,
+                )[0]
                 + ".csv"
             ),
             mime="text/csv",
@@ -1162,7 +1238,9 @@ elif page == "Data Hub":
 
 elif page == "Workforce":
 
-    st.header("Workforce Intelligence")
+    st.header(
+        "Workforce Intelligence"
+    )
 
     st.caption(
         "Translate follow-up risk into operational workload "
@@ -1174,6 +1252,7 @@ elif page == "Workforce":
         st.warning(
             "Action queue unavailable."
         )
+
         st.stop()
 
     if "assigned_cadre" not in action_queue.columns:
@@ -1231,7 +1310,9 @@ elif page == "Workforce":
                     .value_counts()
                 )
 
-                st.bar_chart(high_cadre)
+                st.bar_chart(
+                    high_cadre
+                )
 
         st.info(
             "This is capacity-planning intelligence, not an "
@@ -1245,7 +1326,9 @@ elif page == "Workforce":
 
 elif page == "Medicines":
 
-    st.header("Medicine Intelligence")
+    st.header(
+        "Medicine Intelligence"
+    )
 
     st.caption(
         "Operational visibility into medicine-related "
@@ -1259,7 +1342,8 @@ elif page == "Medicines":
 
     if (
         not action_queue.empty
-        and "predicted_dropout_stage" in action_queue.columns
+        and "predicted_dropout_stage"
+        in action_queue.columns
     ):
 
         medicine_actions = action_queue[
@@ -1278,21 +1362,10 @@ elif page == "Medicines":
 
         medicine_actions = pd.DataFrame()
 
-    c1, c2, c3 = st.columns(3)
-
-    c1.metric(
-        "Medicine-related Actions",
-        number(len(medicine_actions)),
-    )
-
-    c2.metric(
-        "Dispensing Records",
-        number(len(dispensing)),
-    )
-
     if (
         not patient360.empty
-        and "medicine_advised" in patient360.columns
+        and "medicine_advised"
+        in patient360.columns
     ):
 
         medicine_required = (
@@ -1315,9 +1388,31 @@ elif page == "Medicines":
 
         medicine_required = 0
 
+    c1, c2, c3 = st.columns(3)
+
+    c1.metric(
+        "Medicine-related Actions",
+        number(
+            len(
+                medicine_actions
+            )
+        ),
+    )
+
+    c2.metric(
+        "Dispensing Records",
+        number(
+            len(
+                dispensing
+            )
+        ),
+    )
+
     c3.metric(
         "Medicine Advised",
-        number(medicine_required),
+        number(
+            medicine_required
+        ),
     )
 
     st.divider()
@@ -1339,7 +1434,9 @@ elif page == "Medicines":
         ]
 
         st.dataframe(
-            medicine_actions[columns],
+            medicine_actions[
+                columns
+            ],
             use_container_width=True,
             hide_index=True,
         )
@@ -1362,13 +1459,16 @@ elif page == "Medicines":
 
 elif page == "Action Queue":
 
-    st.header("Prioritized Action Queue")
+    st.header(
+        "Prioritized Action Queue"
+    )
 
     if action_queue.empty:
 
         st.warning(
             "Action queue unavailable."
         )
+
         st.stop()
 
     queue = action_queue.copy()
@@ -1378,54 +1478,65 @@ elif page == "Action Queue":
     if "priority_tier" in queue.columns:
 
         values = sorted(
-            queue["priority_tier"]
+            queue[
+                "priority_tier"
+            ]
             .dropna()
             .astype(str)
             .unique()
         )
 
-        selected = c1.multiselect(
+        selected_priority = c1.multiselect(
             "Priority",
             values,
             default=values,
         )
 
-        if selected:
+        if selected_priority:
 
             queue = queue[
                 queue[
                     "priority_tier"
                 ]
                 .astype(str)
-                .isin(selected)
+                .isin(
+                    selected_priority
+                )
             ]
 
     if "assigned_cadre" in queue.columns:
 
         values = sorted(
-            queue["assigned_cadre"]
+            queue[
+                "assigned_cadre"
+            ]
             .dropna()
             .astype(str)
             .unique()
         )
 
-        selected = c2.multiselect(
+        selected_cadre = c2.multiselect(
             "Cadre",
             values,
             default=values,
         )
 
-        if selected:
+        if selected_cadre:
 
             queue = queue[
                 queue[
                     "assigned_cadre"
                 ]
                 .astype(str)
-                .isin(selected)
+                .isin(
+                    selected_cadre
+                )
             ]
 
-    if "predicted_dropout_stage" in queue.columns:
+    if (
+        "predicted_dropout_stage"
+        in queue.columns
+    ):
 
         values = sorted(
             queue[
@@ -1436,26 +1547,32 @@ elif page == "Action Queue":
             .unique()
         )
 
-        selected = c3.multiselect(
+        selected_stage = c3.multiselect(
             "Suggested Stage",
             values,
             default=values,
         )
 
-        if selected:
+        if selected_stage:
 
             queue = queue[
                 queue[
                     "predicted_dropout_stage"
                 ]
                 .astype(str)
-                .isin(selected)
+                .isin(
+                    selected_stage
+                )
             ]
 
     if "risk_probability" in queue.columns:
 
-        queue["risk_probability"] = probability(
-            queue["risk_probability"]
+        queue[
+            "risk_probability"
+        ] = probability(
+            queue[
+                "risk_probability"
+            ]
         )
 
         queue = queue.sort_values(
@@ -1465,7 +1582,9 @@ elif page == "Action Queue":
 
     st.metric(
         "Visible Actions",
-        number(len(queue)),
+        number(
+            len(queue)
+        ),
     )
 
     columns = [
@@ -1486,7 +1605,9 @@ elif page == "Action Queue":
     ]
 
     st.dataframe(
-        queue[columns],
+        queue[
+            columns
+        ],
         use_container_width=True,
         height=620,
         hide_index=True,
@@ -1494,9 +1615,13 @@ elif page == "Action Queue":
 
     st.download_button(
         "Download Action Queue",
-        data=queue[columns].to_csv(
+        data=queue[
+            columns
+        ]
+        .to_csv(
             index=False
-        ).encode("utf-8"),
+        )
+        .encode("utf-8"),
         file_name="priority_action_queue.csv",
         mime="text/csv",
     )
@@ -1508,7 +1633,9 @@ elif page == "Action Queue":
 
 elif page == "Monitoring":
 
-    st.header("Data & Model Monitoring")
+    st.header(
+        "Data & Model Monitoring"
+    )
 
     st.subheader(
         "Dataset Availability"
@@ -1516,10 +1643,16 @@ elif page == "Monitoring":
 
     rows = []
 
-    for filename in REQUIRED_FILES + OPTIONAL_FILES:
+    for filename in (
+        REQUIRED_FILES
+        + OPTIONAL_FILES
+    ):
 
         df = DATA.get(
-            filename.replace(".csv", ""),
+            filename.replace(
+                ".csv",
+                "",
+            ),
             pd.DataFrame(),
         )
 
@@ -1552,7 +1685,10 @@ elif page == "Monitoring":
             teleconsultation_linkage
         )
 
-        if "predicted_patient_id" in teleconsultation_linkage.columns:
+        if (
+            "predicted_patient_id"
+            in teleconsultation_linkage.columns
+        ):
 
             linked = (
                 teleconsultation_linkage[
@@ -1638,3 +1774,13 @@ st.caption(
     "follow-up assurance. Synthetic case-a-thon data unless "
     "explicitly uploaded by the user."
 )
+'''
+
+path = Path("/mnt/data/app_fixed.py")
+path.write_text(code, encoding="utf-8")
+
+# Syntax validation before giving the file to the user.
+compile(code, "app_fixed.py", "exec")
+
+print(f"Created and syntax-validated: {path}")
+print(f"Lines: {len(code.splitlines())}")
