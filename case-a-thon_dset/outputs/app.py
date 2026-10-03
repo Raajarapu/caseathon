@@ -160,6 +160,27 @@ h1, h2, h3, h4, h5, h6,
 
 /* ---------- CUSTOM METRIC CARDS ---------- */
 
+
+.bar-label-clean {
+    color: #26364A !important;
+    font-weight: 650 !important;
+    font-size: 0.88rem !important;
+    margin-bottom: 4px !important;
+}
+.bar-value-clean {
+    color: #0F172A !important;
+    font-weight: 750 !important;
+    font-size: 0.88rem !important;
+    text-align: right !important;
+    padding-top: 20px !important;
+}
+
+
+/* Visible status tables */
+div[data-testid="stDataFrame"] * {
+    color: #1E293B !important;
+}
+
 .metric-card {
     background: #FFFFFF !important;
     border: 1px solid #D8E0EA !important;
@@ -633,7 +654,7 @@ def metric_card(label, value, description=None):
 # ============================================================
 
 def horizontal_bars(series, value_suffix="", max_items=10):
-    """Render chart rows using native Streamlit components; never expose HTML source."""
+    """Render clean native Streamlit horizontal bars with correct displayed values."""
     if series is None or len(series) == 0:
         st.info("No chart data available.")
         return
@@ -645,21 +666,29 @@ def horizontal_bars(series, value_suffix="", max_items=10):
         st.info("No chart data available.")
         return
 
+    # Feature-importance files may store proportions (0.1243)
+    # or percentages (12.43). Display percentage proportions correctly.
+    is_percent = value_suffix == "%"
+    if is_percent and float(data.max()) <= 1.0:
+        data = data * 100.0
+
     maximum = float(data.max()) or 1.0
 
     for label, value in data.items():
         numeric = float(value)
         ratio = max(0.0, min(1.0, numeric / maximum))
-        left, right = st.columns([5, 1])
+
+        left, right = st.columns([5.5, 1])
         with left:
             st.markdown(
-                f"<div style=\"font-weight:650;color:#334155;font-size:0.88rem;margin-bottom:4px;\">{html.escape(str(label))}</div>",
+                f"<div class="bar-label-clean">{html.escape(str(label))}</div>",
                 unsafe_allow_html=True,
             )
             st.progress(ratio)
+
         with right:
             st.markdown(
-                f"<div style=\"text-align:right;font-weight:750;color:#0F172A;font-size:0.9rem;padding-top:20px;\">{numeric:,.0f}{value_suffix}</div>",
+                f"<div class="bar-value-clean">{numeric:,.2f}{value_suffix}</div>",
                 unsafe_allow_html=True,
             )
 
@@ -1389,7 +1418,7 @@ elif page == "Data Hub":
             source_rows.append(
                 {
                     "Dataset": filename,
-                    "Available": not df.empty,
+                    "Status": "✓ Available" if not df.empty else "— Missing",
                     "Rows": len(df),
                     "Columns": len(df.columns),
                 }
@@ -1874,9 +1903,7 @@ elif page == "Monitoring":
         rows.append(
             {
                 "Dataset": filename,
-                "Available": (
-                    OUTPUT_DIR / filename
-                ).exists(),
+                "Status": "✓ Available" if (OUTPUT_DIR / filename).exists() else "— Missing",
                 "Rows": len(df),
                 "Columns": len(df.columns),
             }
@@ -1952,12 +1979,12 @@ elif page == "Monitoring":
                 "Feature Importance",
                 "Action Queue",
             ],
-            "Available": [
-                not model_comparison.empty,
-                not risk_tier_validation.empty,
-                not evaluation_predictions.empty,
-                not feature_importance.empty,
-                not action_queue.empty,
+            "Status": [
+                "✓ Available" if not model_comparison.empty else "— Missing",
+                "✓ Available" if not risk_tier_validation.empty else "— Missing",
+                "✓ Available" if not evaluation_predictions.empty else "— Missing",
+                "✓ Available" if not feature_importance.empty else "— Missing",
+                "✓ Available" if not action_queue.empty else "— Missing",
             ],
         }
     )
