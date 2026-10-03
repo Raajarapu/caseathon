@@ -1,5 +1,6 @@
 
 import io
+import html
 from pathlib import Path
 
 import pandas as pd
@@ -332,6 +333,190 @@ div[data-testid="stRadio"] span {
     }
 }
 
+
+/* ---------- POLISHED PAGE HEADER ---------- */
+.app-header {
+    margin-top: 0.65rem !important;
+    margin-bottom: 1.65rem !important;
+}
+
+.app-title {
+    font-size: 2.15rem !important;
+    letter-spacing: -0.025em !important;
+}
+
+.section-title {
+    font-size: 1.55rem !important;
+    letter-spacing: -0.015em !important;
+    margin-top: 0.15rem !important;
+    margin-bottom: 0.35rem !important;
+}
+
+.subsection-title {
+    font-size: 1.12rem !important;
+    margin-top: 0.25rem !important;
+}
+
+/* ---------- LIGHT CHART CARDS ---------- */
+.chart-card {
+    background: #FFFFFF !important;
+    border: 1px solid #DCE3EC !important;
+    border-radius: 14px !important;
+    padding: 1.05rem 1.15rem !important;
+    box-shadow: 0 3px 12px rgba(15, 23, 42, 0.06) !important;
+}
+
+.bar-row {
+    margin: 0.75rem 0 !important;
+}
+
+.bar-row-top {
+    display: flex !important;
+    justify-content: space-between !important;
+    gap: 1rem !important;
+    margin-bottom: 0.35rem !important;
+}
+
+.bar-label {
+    color: #334155 !important;
+    -webkit-text-fill-color: #334155 !important;
+    font-size: 0.86rem !important;
+    font-weight: 650 !important;
+}
+
+.bar-value {
+    color: #0F172A !important;
+    -webkit-text-fill-color: #0F172A !important;
+    font-size: 0.84rem !important;
+    font-weight: 750 !important;
+}
+
+.bar-track {
+    width: 100% !important;
+    height: 9px !important;
+    background: #E8EEF5 !important;
+    border-radius: 999px !important;
+    overflow: hidden !important;
+}
+
+.bar-fill {
+    height: 100% !important;
+    background: #4F86C6 !important;
+    border-radius: 999px !important;
+}
+
+/* ---------- UPLOAD INTRO ---------- */
+.upload-intro {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 1rem !important;
+    background: #EEF4FB !important;
+    border: 1px solid #D5E2F0 !important;
+    border-radius: 10px !important;
+    padding: 0.8rem 1rem !important;
+    margin: 0.2rem 0 0.65rem 0 !important;
+}
+.upload-intro strong {
+    color: #17324D !important;
+    -webkit-text-fill-color: #17324D !important;
+}
+.upload-intro span {
+    color: #5B7085 !important;
+    -webkit-text-fill-color: #5B7085 !important;
+    font-size: 0.84rem !important;
+}
+
+/* ---------- FILE UPLOADER: FORCE LIGHT VISIBLE UI ---------- */
+[data-testid="stFileUploader"] {
+    background: #FFFFFF !important;
+    border: 1px solid #D5DEE9 !important;
+    border-radius: 14px !important;
+    padding: 0.8rem !important;
+    box-shadow: 0 3px 12px rgba(15, 23, 42, 0.06) !important;
+}
+
+[data-testid="stFileUploaderDropzone"] {
+    background: #F8FAFC !important;
+    border: 2px dashed #A8B6C8 !important;
+    border-radius: 10px !important;
+    min-height: 120px !important;
+}
+
+[data-testid="stFileUploaderDropzone"] * {
+    color: #334155 !important;
+    -webkit-text-fill-color: #334155 !important;
+}
+
+[data-testid="stFileUploaderDropzone"] button {
+    background: #1D4ED8 !important;
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+    border: 0 !important;
+    border-radius: 8px !important;
+    font-weight: 700 !important;
+}
+
+[data-testid="stFileUploaderDropzone"] button * {
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+}
+
+[data-testid="stFileUploaderFile"] {
+    background: #FFFFFF !important;
+    border: 1px solid #D5DEE9 !important;
+}
+
+[data-testid="stFileUploaderFile"] * {
+    color: #172033 !important;
+    -webkit-text-fill-color: #172033 !important;
+}
+
+/* ---------- SELECTS / MULTISELECTS ---------- */
+div[data-baseweb="select"] {
+    background: #FFFFFF !important;
+    border-radius: 9px !important;
+}
+
+div[data-baseweb="select"] > div {
+    background: #FFFFFF !important;
+    border: 1px solid #CBD5E1 !important;
+    color: #172033 !important;
+}
+
+div[data-baseweb="select"] input {
+    color: #172033 !important;
+    -webkit-text-fill-color: #172033 !important;
+}
+
+/* ---------- INFO / SUCCESS BOXES ---------- */
+div[data-testid="stAlert"] {
+    color: #172033 !important;
+}
+
+div[data-testid="stAlert"] p,
+div[data-testid="stAlert"] span {
+    color: #172033 !important;
+    -webkit-text-fill-color: #172033 !important;
+}
+
+/* ---------- DOWNLOAD / PRIMARY ACTIONS ---------- */
+.stDownloadButton > button,
+.stButton > button {
+    min-height: 42px !important;
+    font-weight: 650 !important;
+}
+
+.stButton > button[kind="primary"] {
+    background: #1D4ED8 !important;
+    color: #FFFFFF !important;
+    border-color: #1D4ED8 !important;
+}
+
+.stButton > button[kind="primary"] * {
+    color: #FFFFFF !important;
+}
+
 </style>
 """,
     unsafe_allow_html=True,
@@ -444,6 +629,51 @@ def metric_card(label, value, description=None):
 
 
 # ============================================================
+# LIGHTWEIGHT CHARTS
+# ============================================================
+
+def horizontal_bars(series, value_suffix="", max_items=10):
+    """Render a clean light-theme horizontal bar chart without a chart dependency."""
+    if series is None or len(series) == 0:
+        st.info("No chart data available.")
+        return
+
+    data = pd.to_numeric(series, errors="coerce").dropna()
+    data = data.sort_values(ascending=False).head(max_items)
+
+    if data.empty:
+        st.info("No chart data available.")
+        return
+
+    maximum = float(data.max()) or 1.0
+    rows = []
+
+    for label, value in data.items():
+        safe_label = html.escape(str(label))
+        numeric = float(value)
+        width = max(3.0, min(100.0, numeric / maximum * 100.0))
+        display = f"{numeric:,.0f}{value_suffix}"
+        rows.append(
+            f"""
+            <div class="bar-row">
+                <div class="bar-row-top">
+                    <span class="bar-label">{safe_label}</span>
+                    <span class="bar-value">{display}</span>
+                </div>
+                <div class="bar-track">
+                    <div class="bar-fill" style="width:{width:.1f}%"></div>
+                </div>
+            </div>
+            """
+        )
+
+    st.markdown(
+        '<div class="chart-card">' + "".join(rows) + '</div>',
+        unsafe_allow_html=True,
+    )
+
+
+# ============================================================
 # LOAD DATA
 # ============================================================
 
@@ -537,12 +767,8 @@ METRICS = calculate_metrics()
 # ============================================================
 
 st.markdown(
-    f'<div class="app-title">{APP_TITLE}</div>',
-    unsafe_allow_html=True,
-)
-
-st.markdown(
-    f'<div class="app-subtitle">{APP_SUBTITLE}</div>',
+    f'<div class="app-header"><div class="app-title">{APP_TITLE}</div>'
+    f'<div class="app-subtitle">{APP_SUBTITLE}</div></div>',
     unsafe_allow_html=True,
 )
 
@@ -566,6 +792,7 @@ page = st.sidebar.radio(
         "Action Queue",
         "Monitoring",
     ],
+    key="page_nav",
 )
 
 st.sidebar.divider()
@@ -648,7 +875,7 @@ if page == "Overview":
                 }
             )
 
-        st.bar_chart(stages)
+        horizontal_bars(stages, max_items=6)
 
     with right:
         subsection("Risk Distribution")
@@ -673,7 +900,7 @@ if page == "Overview":
         else:
             risk = pd.Series(dtype="int64")
 
-        st.bar_chart(risk)
+        horizontal_bars(risk, max_items=4)
 
     st.divider()
 
@@ -1028,8 +1255,10 @@ elif page == "Risk AI":
             )
 
             if not fi.empty:
-                st.bar_chart(
-                    fi.set_index(feature_col)[importance_col]
+                horizontal_bars(
+                    fi.set_index(feature_col)[importance_col],
+                    value_suffix="%" if "pct" in importance_col.lower() else "",
+                    max_items=12,
                 )
 
             st.caption(
@@ -1091,8 +1320,9 @@ elif page == "Care Journey":
             stages["Episodes"] / total * 100
         )
 
-    st.bar_chart(
-        stages.set_index("Stage")["Episodes"]
+    horizontal_bars(
+        stages.set_index("Stage")["Episodes"],
+        max_items=8,
     )
 
     subsection("Care Journey")
@@ -1133,6 +1363,16 @@ elif page == "Data Hub":
     subtitle(
         "Upload regional CSV/XLSX data and validate it before "
         "downstream processing."
+    )
+
+    if st.button("← Back to Overview", key="datahub_back", type="secondary"):
+        st.session_state["page_nav"] = "Overview"
+        st.rerun()
+
+    st.markdown(
+        '<div class="upload-intro"><strong>Regional dataset upload</strong>'
+        '<span>CSV or XLSX · Schema validation · Quality checks · Preview</span></div>',
+        unsafe_allow_html=True,
     )
 
     uploaded = st.file_uploader(
@@ -1352,7 +1592,7 @@ elif page == "Workforce":
 
         with left:
             subsection("Workload by Cadre")
-            st.bar_chart(cadre)
+            horizontal_bars(cadre, max_items=8)
 
         with right:
             subsection("High-Priority Workload")
@@ -1372,7 +1612,7 @@ elif page == "Workforce":
                     .value_counts()
                 )
 
-                st.bar_chart(high_cadre)
+                horizontal_bars(high_cadre, max_items=8)
 
         st.info(
             "This is capacity-planning intelligence, not an "
