@@ -50,6 +50,11 @@ OPTIONAL_FILES = [
     "eda_gender.csv",
     "eda_language.csv",
     "medicine_dispensing.csv",
+    "medicine_stock_status.csv",
+    "prescriptions.csv",
+    "teleconsultations.csv",
+    "facility_reference.csv",
+    "geography_reference.csv",
 ]
 
 # ============================================================
@@ -336,6 +341,55 @@ div[data-testid="stRadio"] span {
 [data-testid="stCaptionContainer"] p {
     color: #64748B !important;
     -webkit-text-fill-color: #64748B !important;
+}
+
+
+/* ---------- NEW HEALTHCARE INTELLIGENCE ---------- */
+.health-step {
+    background: #F8FAFC !important;
+    border: 1px solid #E2E8F0 !important;
+    border-radius: 11px !important;
+    padding: 0.82rem !important;
+    min-height: 82px !important;
+    margin-bottom: 0.65rem !important;
+    overflow: visible !important;
+}
+.health-step-title {
+    color: #172033 !important;
+    -webkit-text-fill-color: #172033 !important;
+    font-weight: 750 !important;
+    font-size: 0.92rem !important;
+    line-height: 1.35 !important;
+}
+.health-step-text {
+    color: #475569 !important;
+    -webkit-text-fill-color: #475569 !important;
+    font-size: 0.82rem !important;
+    line-height: 1.5 !important;
+    margin-top: 0.25rem !important;
+}
+.decision-box {
+    background: #F8FAFC !important;
+    border: 1px solid #D8E0EA !important;
+    border-left: 4px solid #4F86C6 !important;
+    border-radius: 10px !important;
+    padding: 0.9rem 1rem !important;
+    margin: 0.55rem 0 !important;
+    overflow: visible !important;
+}
+.decision-box strong {
+    color: #172033 !important;
+    -webkit-text-fill-color: #172033 !important;
+}
+.decision-box span {
+    color: #475569 !important;
+    -webkit-text-fill-color: #475569 !important;
+}
+[data-testid="stDataFrame"] div,
+[data-testid="stDataFrame"] span,
+[data-testid="stDataFrame"] p {
+    color: #1E293B !important;
+    -webkit-text-fill-color: #1E293B !important;
 }
 
 /* ---------- RESPONSIVE ---------- */
@@ -649,6 +703,369 @@ def metric_card(label, value, description=None):
     )
 
 
+
+# ============================================================
+# NEW HEALTHCARE INTELLIGENCE HELPERS
+# ============================================================
+
+def first_column(df, candidates):
+    if df is None or df.empty:
+        return None
+    lower_map = {str(c).strip().lower(): c for c in df.columns}
+    for candidate in candidates:
+        if candidate in df.columns:
+            return candidate
+        key = str(candidate).strip().lower()
+        if key in lower_map:
+            return lower_map[key]
+    return None
+
+
+def clean_key(series):
+    return series.astype(str).str.strip().replace({"nan": ""})
+
+
+def yes_value(value):
+    if value is None:
+        return False
+    try:
+        if pd.isna(value):
+            return False
+    except Exception:
+        pass
+    return str(value).strip().lower() in {
+        "yes", "y", "true", "1", "required", "advised"
+    }
+
+
+def numeric_value(value, default=0.0):
+    try:
+        value = pd.to_numeric(value, errors="coerce")
+        if pd.isna(value):
+            return default
+        return float(value)
+    except Exception:
+        return default
+
+
+def care_burden_from_row(row):
+    """Operational coordination score; not a clinical severity score."""
+    score = 0.0
+    reasons = []
+
+    medicine = yes_value(row.get("medicine_advised", row.get("medicine_required", False)))
+    test = yes_value(row.get("test_advised", row.get("test_required", False)))
+    review = yes_value(row.get("review_advised", row.get("review_required", False)))
+
+    requirement_count = int(medicine) + int(test) + int(review)
+    if requirement_count:
+        score += min(30.0, requirement_count / 3.0 * 30.0)
+        reasons.append(f"{requirement_count} required care component(s)")
+
+    distance = numeric_value(row.get("distance_to_facility_km", row.get("distance_km", 0)))
+    if distance > 10:
+        score += 25
+        reasons.append("long travel distance")
+    elif distance > 5:
+        score += 18
+        reasons.append("moderate-to-high travel distance")
+    elif distance > 2:
+        score += 10
+        reasons.append("non-trivial travel distance")
+
+    due = numeric_value(row.get("review_due_days", row.get("days_to_review", 999)), 999)
+    if due <= 2:
+        score += 20
+        reasons.append("follow-up window is very near")
+    elif due <= 7:
+        score += 14
+        reasons.append("follow-up window is approaching")
+    elif due <= 14:
+        score += 7
+        reasons.append("follow-up is due within two weeks")
+
+    previous = numeric_value(row.get("previous_care_requirements", 0))
+    if previous > 0:
+        score += min(15.0, previous * 5.0)
+        reasons.append("previous care requirements are present")
+
+    if yes_value(row.get("complex_care_episode", False)):
+        score += 10
+        reasons.append("multiple/complex care context")
+
+    if yes_value(row.get("elderly_living_alone", False)):
+        score += 5
+        reasons.append("recorded social vulnerability")
+
+    score = max(0.0, min(100.0, score))
+    level = "HIGH" if score >= 70 else "MODERATE" if score >= 40 else "LOW"
+    return score, level, reasons
+
+
+def infer_stock_signal(stock_df):
+    if stock_df is None or stock_df.empty:
+        return None, "Stock-status dataset is not packaged in the current output bundle."
+
+    status_col = first_column(
+        stock_df,
+        [
+            "stock_status", "stock_status_label", "availability_status",
+            "stock_availability", "status", "availability", "stock_state",
+        ],
+    )
+    days_col = first_column(
+        stock_df,
+        ["stockout_days", "days_stockout", "stockout_duration_days"],
+    )
+
+    if status_col is None and days_col is None:
+        return None, "Stock dataset found, but no recognizable stock-status field was available."
+
+    work = stock_df.copy()
+    work["__stock_issue"] = False
+    work["__stock_label"] = "Available / no issue recorded"
+
+    if status_col is not None:
+        status = work[status_col].astype(str).str.strip().str.lower()
+        issue_terms = "stockout|out of stock|unavailable|low|shortage|critical|not available"
+        work.loc[status.str.contains(issue_terms, regex=True, na=False), "__stock_issue"] = True
+        work.loc[work["__stock_issue"], "__stock_label"] = work.loc[
+            work["__stock_issue"], status_col
+        ].astype(str)
+
+    if days_col is not None:
+        days = pd.to_numeric(work[days_col], errors="coerce").fillna(0)
+        work.loc[days > 0, "__stock_issue"] = True
+        work.loc[days > 0, "__stock_label"] = "Stockout recorded"
+
+    return work, "Stock availability signal detected from regional stock data."
+
+
+def attach_patient_context(base, patient_df):
+    work = base.copy()
+
+    # First enrich with the development Patient 360 context.
+    if "patient_id" in work.columns and "patient_id" in patient_df.columns:
+        cols = [
+            c for c in [
+                "patient_id", "medicine_advised", "test_advised", "review_advised",
+                "distance_to_facility_km", "connectivity_quality", "vulnerability_group",
+                "age_as_of_2026", "review_due_days",
+            ] if c in patient_df.columns
+        ]
+        if cols:
+            p = patient_df[cols].copy()
+            p["patient_id"] = clean_key(p["patient_id"])
+            p = p.drop_duplicates("patient_id", keep="last")
+            work["patient_id"] = clean_key(work["patient_id"])
+            work = work.merge(p, on="patient_id", how="left", suffixes=("", "_patient"))
+
+    # Evaluation Intelligence is episode-level and is therefore useful for the
+    # evaluation cohort, where development Patient 360 may not contain the row.
+    try:
+        eval_df = DATA.get("evaluation_intelligence", pd.DataFrame())
+    except Exception:
+        eval_df = pd.DataFrame()
+
+    if not eval_df.empty and "episode_id" in work.columns and "episode_id" in eval_df.columns:
+        wanted = [
+            "episode_id", "patient_id", "medicine_advised", "test_advised",
+            "review_advised", "distance_to_facility_km", "connectivity_quality",
+            "review_due_days", "previous_care_requirements", "complex_care_episode",
+            "elderly_living_alone", "facility_id", "medicine_id",
+        ]
+        cols = [c for c in wanted if c in eval_df.columns]
+        if "episode_id" in cols:
+            e = eval_df[cols].copy().drop_duplicates("episode_id", keep="last")
+            e["episode_id"] = clean_key(e["episode_id"])
+            work["episode_id"] = clean_key(work["episode_id"])
+            work = work.merge(e, on="episode_id", how="left", suffixes=("", "_eval"))
+
+            # Coalesce evaluation context into the base columns without replacing
+            # values already present in the action queue.
+            for field in [
+                "medicine_advised", "test_advised", "review_advised",
+                "distance_to_facility_km", "connectivity_quality", "review_due_days",
+                "previous_care_requirements", "complex_care_episode",
+                "elderly_living_alone", "facility_id", "medicine_id",
+            ]:
+                eval_field = f"{field}_eval"
+                if eval_field in work.columns:
+                    if field not in work.columns:
+                        work[field] = work[eval_field]
+                    else:
+                        work[field] = work[field].where(work[field].notna(), work[eval_field])
+
+    return work
+
+
+def build_medicine_impact(action_df, patient_df, dispensing_df, stock_df):
+    if action_df is None or action_df.empty:
+        return pd.DataFrame(), "No action records are available."
+
+    work = attach_patient_context(action_df, patient_df)
+
+    stage_signal = (
+        work["predicted_dropout_stage"].astype(str).str.contains("medicine", case=False, na=False)
+        if "predicted_dropout_stage" in work.columns
+        else pd.Series(False, index=work.index)
+    )
+    need_signal = (
+        work["medicine_advised"].map(yes_value)
+        if "medicine_advised" in work.columns
+        else pd.Series(False, index=work.index)
+    )
+    work = work[stage_signal | need_signal].copy()
+
+    if work.empty:
+        return pd.DataFrame(), "No medicine-related episodes were identified."
+
+    work["stock_issue"] = False
+    work["stock_signal"] = "Not available in current bundle"
+
+    stock_work, stock_note = infer_stock_signal(stock_df)
+    if stock_work is not None and not stock_work.empty:
+        if all(c in work.columns and c in stock_work.columns for c in ["facility_id", "medicine_id"]):
+            small = stock_work[
+                ["facility_id", "medicine_id", "__stock_issue", "__stock_label"]
+            ].drop_duplicates(["facility_id", "medicine_id"], keep="last").copy()
+            for c in ["facility_id", "medicine_id"]:
+                work[c] = clean_key(work[c])
+                small[c] = clean_key(small[c])
+            work = work.merge(small, on=["facility_id", "medicine_id"], how="left")
+            work["stock_issue"] = work["__stock_issue"].fillna(False).astype(bool)
+            work["stock_signal"] = work["__stock_label"].fillna("No linked stock signal")
+        else:
+            shared = []
+            for key in ["facility_id", "medicine_id", "facility", "medicine", "medicine_name"]:
+                if key in work.columns and key in stock_work.columns:
+                    shared.append(key)
+            if shared:
+                key = shared[0]
+                small = stock_work[[key, "__stock_issue", "__stock_label"]].drop_duplicates(key, keep="last")
+                work = work.merge(small, on=key, how="left")
+                work["stock_issue"] = work["__stock_issue"].fillna(False).astype(bool)
+                work["stock_signal"] = work["__stock_label"].fillna("No linked stock signal")
+
+    if dispensing_df is not None and not dispensing_df.empty:
+        status_col = first_column(
+            dispensing_df,
+            ["dispensing_status", "dispense_status", "status", "dispensed", "collection_status"],
+        )
+        if status_col:
+            status = dispensing_df[status_col].astype(str).str.lower()
+            work["dispensing_barrier_signal"] = (
+                "Potential dispensing barrier" if status.str.contains("pending|not|failed|unavailable|no", na=False).any()
+                else "No dispensing barrier detected"
+            )
+        else:
+            work["dispensing_barrier_signal"] = "Dispensing status not mapped"
+    else:
+        work["dispensing_barrier_signal"] = "Dispensing data unavailable"
+
+    work["risk_probability"] = (
+        probability(work["risk_probability"]) if "risk_probability" in work.columns else 0.0
+    )
+    work["patient_impact_priority"] = "STANDARD"
+    work.loc[(work["stock_issue"]) & (work["risk_probability"] >= 0.60), "patient_impact_priority"] = "VERY HIGH"
+    work.loc[(work["stock_issue"]) & (work["risk_probability"] < 0.60), "patient_impact_priority"] = "HIGH"
+    work.loc[(~work["stock_issue"]) & (work["risk_probability"] >= 0.80), "patient_impact_priority"] = "HIGH"
+
+    return work, stock_note
+
+
+def next_best_action(row):
+    medicine = yes_value(row.get("medicine_advised", row.get("medicine_required", False)))
+    test = yes_value(row.get("test_advised", row.get("test_required", False)))
+    review = yes_value(row.get("review_advised", row.get("review_required", False)))
+    stock_issue = yes_value(row.get("stock_issue", False))
+    distance = numeric_value(row.get("distance_to_facility_km", row.get("distance_km", 0)))
+    connectivity = str(row.get("connectivity_quality", "")).strip().lower()
+    risk = numeric_value(row.get("risk_probability", 0))
+    stage = str(row.get("predicted_dropout_stage", "")).lower()
+
+    if stock_issue and medicine:
+        return (
+            "Verify medicine availability at the linked facility and coordinate collection support.",
+            "ASHA / Facility team",
+            "Medicine access dependency",
+        )
+    if medicine and "medicine" in stage:
+        return (
+            "Contact the patient, confirm medicine collection status, and coordinate pickup support if needed.",
+            "ASHA",
+            "Medicine collection dependency",
+        )
+    if test and "test" in stage:
+        return (
+            "Confirm the required test and coordinate the next available facility/lab visit.",
+            "ASHA / CHO",
+            "Diagnostic completion dependency",
+        )
+    if review and "review" in stage:
+        return (
+            "Schedule or remind the patient about the required follow-up review.",
+            "CHO",
+            "Review attendance dependency",
+        )
+    if distance > 10:
+        return (
+            "Use community outreach and coordinate the lowest-friction follow-up option for a long-distance patient.",
+            "ASHA",
+            "Geographic access barrier",
+        )
+    if connectivity in {"poor", "intermittent", "limited"}:
+        return (
+            "Prefer low-bandwidth phone/SMS/community outreach for the follow-up contact.",
+            "ASHA",
+            "Connectivity barrier",
+        )
+    if risk >= 0.80:
+        return (
+            "Perform priority outreach and verify that all required follow-up steps are progressing.",
+            "CHO / ASHA",
+            "High overall follow-up risk",
+        )
+    return (
+        "Send a routine follow-up reminder and verify completion of the outstanding care step.",
+        "CHO / ASHA",
+        "Routine continuity action",
+    )
+
+
+def build_next_best_action(action_df, patient_df, stock_df):
+    if action_df is None or action_df.empty:
+        return pd.DataFrame()
+
+    work = attach_patient_context(action_df, patient_df)
+    stock_work, _ = infer_stock_signal(stock_df)
+    work["stock_issue"] = False
+    work["stock_signal"] = "Stock dataset not available"
+
+    if stock_work is not None and not stock_work.empty:
+        if all(c in work.columns and c in stock_work.columns for c in ["facility_id", "medicine_id"]):
+            small = stock_work[
+                ["facility_id", "medicine_id", "__stock_issue", "__stock_label"]
+            ].drop_duplicates(["facility_id", "medicine_id"], keep="last").copy()
+            for c in ["facility_id", "medicine_id"]:
+                work[c] = clean_key(work[c])
+                small[c] = clean_key(small[c])
+            work = work.merge(small, on=["facility_id", "medicine_id"], how="left")
+            work["stock_issue"] = work["__stock_issue"].fillna(False).astype(bool)
+            work["stock_signal"] = work["__stock_label"].fillna("No linked stock signal")
+
+    work["risk_probability"] = (
+        probability(work["risk_probability"]) if "risk_probability" in work.columns else 0.0
+    )
+    decisions = work.apply(next_best_action, axis=1, result_type="expand")
+    decisions.columns = ["next_best_action", "recommended_cadre", "dependency"]
+    work = pd.concat([work.reset_index(drop=True), decisions.reset_index(drop=True)], axis=1)
+    work["action_priority"] = "STANDARD"
+    work.loc[work["risk_probability"] >= 0.80, "action_priority"] = "VERY HIGH"
+    work.loc[(work["risk_probability"] >= 0.60) & (work["risk_probability"] < 0.80), "action_priority"] = "HIGH"
+    return work
+
+
 # ============================================================
 # LIGHTWEIGHT CHARTS
 # ============================================================
@@ -809,6 +1226,9 @@ page = st.sidebar.radio(
         "Data Hub",
         "Workforce",
         "Medicines",
+        "Medicine Stock Impact",
+        "Care Burden",
+        "Next Best Action",
         "Action Queue",
         "Monitoring",
     ],
@@ -1385,10 +1805,6 @@ elif page == "Data Hub":
         "downstream processing."
     )
 
-    if st.button("← Back to Overview", key="datahub_back", type="secondary"):
-        st.session_state["page_nav"] = "Overview"
-        st.rerun()
-
     st.markdown(
         '<div class="upload-intro"><strong>Regional dataset upload</strong>'
         '<span>CSV or XLSX · Schema validation · Quality checks · Preview</span></div>',
@@ -1739,6 +2155,290 @@ elif page == "Medicines":
     st.info(
         "Medicine intelligence supports operational continuity "
         "planning. It does not generate clinical prescriptions."
+    )
+
+
+
+# ============================================================
+# MEDICINE STOCK -> PATIENT IMPACT
+# ============================================================
+
+elif page == "Medicine Stock Impact":
+
+    title("Medicine Stock → Patient Impact")
+    subtitle(
+        "Connect medicine availability signals with patients and follow-up episodes that may be operationally affected."
+    )
+
+    dispensing = DATA.get("medicine_dispensing", pd.DataFrame())
+    stock = DATA.get("medicine_stock_status", pd.DataFrame())
+
+    impact, stock_note = build_medicine_impact(
+        action_queue,
+        patient360,
+        dispensing,
+        stock,
+    )
+
+    stock_available = stock is not None and not stock.empty
+    stock_issues = int(impact["stock_issue"].sum()) if not impact.empty and "stock_issue" in impact.columns else 0
+    high_impact = int(impact["patient_impact_priority"].isin(["HIGH", "VERY HIGH"]).sum()) if not impact.empty and "patient_impact_priority" in impact.columns else 0
+
+    c1, c2, c3, c4 = st.columns(4)
+    with c1:
+        metric_card("Medicine-Linked Episodes", number(len(impact)), "Evaluation episodes requiring or associated with medicine continuity.")
+    with c2:
+        metric_card("Stock Issues Linked", number(stock_issues), "Recorded stock/availability issues linked to patient episodes when stock data is available.")
+    with c3:
+        metric_card("Priority Patient Impacts", number(high_impact), "Medicine-linked episodes with HIGH or VERY HIGH operational impact.")
+    with c4:
+        metric_card("Stock Data", "Available" if stock_available else "Not loaded", "Uses the regional stock-status table when it is packaged with the app.")
+
+    st.divider()
+
+    if stock_available:
+        st.success(stock_note)
+    else:
+        st.info(
+            "The current Streamlit output bundle does not contain medicine_stock_status.csv. "
+            "The page does not invent stockout evidence; it continues to show medicine-related patient impact from the available outputs."
+        )
+
+    if impact.empty:
+        st.warning("No medicine-related patient impact records are available.")
+    else:
+        left, right = st.columns([1.2, 1])
+
+        with left:
+            subsection("Patient Impact Queue")
+            columns = [
+                c for c in [
+                    "episode_id", "patient_id", "risk_probability", "priority_tier",
+                    "patient_impact_priority", "stock_signal",
+                    "dispensing_barrier_signal", "recommended_action", "assigned_cadre",
+                ] if c in impact.columns
+            ]
+            table = impact[columns].copy()
+            if "risk_probability" in table.columns:
+                table["risk_probability"] = probability(table["risk_probability"]).map(lambda x: f"{x:.1%}")
+            if "patient_impact_priority" in table.columns:
+                order = {"VERY HIGH": 0, "HIGH": 1, "STANDARD": 2}
+                table["__order"] = table["patient_impact_priority"].map(order).fillna(3)
+                table = table.sort_values("__order").drop(columns=["__order"])
+            st.dataframe(table, use_container_width=True, height=470, hide_index=True)
+
+        with right:
+            subsection("Operational Impact Logic")
+            logic = [
+                ("01", "Medicine need", "Identify episodes where medicine continuity is required."),
+                ("02", "Availability", "Link facility + medicine stock status when regional stock data is present."),
+                ("03", "Patient risk", "Combine the availability signal with existing LTFU risk."),
+                ("04", "Priority", "Surface cases where operational intervention may prevent a care gap."),
+            ]
+            for step, heading, body in logic:
+                st.markdown(
+                    f'''<div class="health-step">
+<div class="health-step-title">{step} · {html.escape(heading)}</div>
+<div class="health-step-text">{html.escape(body)}</div>
+</div>''',
+                    unsafe_allow_html=True,
+                )
+
+        st.divider()
+        subsection("Healthcare Safety Boundary")
+        st.markdown(
+            '<div class="decision-box"><strong>Operational signal only.</strong> '
+            '<span>This module identifies possible medicine-access barriers and prioritizes follow-up work. '
+            'It does not prescribe, change medicines, or make a clinical decision.</span></div>',
+            unsafe_allow_html=True,
+        )
+
+
+# ============================================================
+# CARE BURDEN
+# ============================================================
+
+elif page == "Care Burden":
+
+    title("Care-Burden Intelligence")
+    subtitle(
+        "Estimate the operational effort required to complete the post-consultation care journey. "
+        "This is not a clinical severity score."
+    )
+
+    if action_queue.empty:
+        st.warning("Action queue data is unavailable.")
+        st.stop()
+
+    burden_source = attach_patient_context(action_queue, patient360)
+    burden_values = burden_source.apply(care_burden_from_row, axis=1, result_type="expand")
+    burden_values.columns = ["care_burden_score", "care_burden_level", "care_burden_reasons"]
+    burden = pd.concat(
+        [burden_source.reset_index(drop=True), burden_values.reset_index(drop=True)],
+        axis=1,
+    )
+
+    c1, c2, c3, c4 = st.columns(4)
+    with c1:
+        metric_card("Average Care Burden", f"{burden['care_burden_score'].mean():.1f}/100", "Operational burden across evaluation episodes.")
+    with c2:
+        metric_card("High Burden Episodes", number(int((burden['care_burden_level'] == 'HIGH').sum())), "Episodes requiring more coordination effort.")
+    with c3:
+        metric_card("Moderate Burden", number(int((burden['care_burden_level'] == 'MODERATE').sum())), "Episodes with multiple operational dependencies.")
+    with c4:
+        metric_card("Low Burden", number(int((burden['care_burden_level'] == 'LOW').sum())), "Episodes with fewer recorded coordination demands.")
+
+    st.divider()
+
+    left, right = st.columns([1, 1.2])
+
+    with left:
+        subsection("Care-Burden Distribution")
+        distribution = burden["care_burden_level"].value_counts().reindex(
+            ["LOW", "MODERATE", "HIGH"], fill_value=0
+        )
+        horizontal_bars(distribution, max_items=3)
+
+        subsection("Score Interpretation")
+        interpretation = pd.DataFrame(
+            {
+                "Level": ["LOW", "MODERATE", "HIGH"],
+                "Range": ["0–39", "40–69", "70–100"],
+                "Operational meaning": [
+                    "Fewer recorded coordination barriers.",
+                    "Multiple steps may require active follow-up.",
+                    "Several dependencies or access barriers may need coordinated outreach.",
+                ],
+            }
+        )
+        st.dataframe(interpretation, use_container_width=True, hide_index=True)
+
+    with right:
+        subsection("Highest-Burden Episodes")
+        top = burden.sort_values("care_burden_score", ascending=False).head(15).copy()
+        top["Care Burden"] = top["care_burden_score"].map(lambda x: f"{x:.0f}/100")
+        top["Why"] = top["care_burden_reasons"].map(
+            lambda x: "; ".join(x) if isinstance(x, list) else text_value(x, "No specific factors recorded.")
+        )
+        columns = [
+            c for c in ["episode_id", "patient_id", "Care Burden", "care_burden_level", "risk_probability", "Why"]
+            if c in top.columns
+        ]
+        view = top[columns].copy()
+        if "risk_probability" in view.columns:
+            view["risk_probability"] = probability(view["risk_probability"]).map(lambda x: f"{x:.1%}")
+        st.dataframe(view, use_container_width=True, height=450, hide_index=True)
+
+    st.divider()
+    st.markdown(
+        '<div class="decision-box"><strong>What this adds:</strong> '
+        '<span>Risk prediction answers who may be lost to follow-up. Care burden adds a second operational dimension: '
+        'how difficult the required care journey may be to complete.</span></div>',
+        unsafe_allow_html=True,
+    )
+
+
+# ============================================================
+# FOLLOW-UP DEPENDENCY / NEXT-BEST-ACTION ENGINE
+# ============================================================
+
+elif page == "Next Best Action":
+
+    title("Follow-up Dependency & Next-Best-Action Engine")
+    subtitle(
+        "Translate risk and care dependencies into a transparent, rule-based operational action for CHOs and ASHAs."
+    )
+
+    if action_queue.empty:
+        st.warning("Action queue data is unavailable.")
+        st.stop()
+
+    nba = build_next_best_action(
+        action_queue,
+        patient360,
+        DATA.get("medicine_stock_status", pd.DataFrame()),
+    )
+
+    if nba.empty:
+        st.warning("No next-best-action records are available.")
+        st.stop()
+
+    if "episode_id" not in nba.columns:
+        st.error("episode_id is required for the next-best-action module.")
+        st.stop()
+
+    episodes = nba["episode_id"].dropna().astype(str).unique().tolist()
+    selected_episode = st.selectbox("Select Episode", episodes, key="nba_episode_selector")
+    selected = nba[nba["episode_id"].astype(str) == selected_episode]
+    row = selected.iloc[0]
+
+    c1, c2, c3, c4 = st.columns(4)
+    with c1:
+        metric_card("Episodes With Action", number(len(nba)), "Episodes mapped to an operational follow-up action.")
+    with c2:
+        metric_card("Very High Priority", number(int((nba["action_priority"] == "VERY HIGH").sum())), "Highest-risk episodes requiring prompt review.")
+    with c3:
+        metric_card("High Priority", number(int((nba["action_priority"] == "HIGH").sum())), "High-risk episodes requiring active coordination.")
+    with c4:
+        metric_card("Action Rules", number(nba["next_best_action"].nunique()), "Distinct transparent operational pathways generated.")
+
+    st.divider()
+
+    left, right = st.columns([1, 1.25])
+
+    with left:
+        subsection("Current Episode Signal")
+        risk_value = numeric_value(row.get("risk_probability", 0))
+        metric_card("LTFU Risk", f"{risk_value:.1%}", "Existing model probability.")
+        metric_card("Priority", safe_metric(row.get("priority_tier", row.get("action_priority", "N/A"))), "Existing operational priority.")
+        metric_card("Suggested Stage", safe_metric(row.get("predicted_dropout_stage", "N/A")), "Existing heuristic stage suggestion.")
+
+    with right:
+        subsection("Dependency Chain")
+        steps = [
+            ("01", "Consultation", "The episode is evaluated at the defined prediction point."),
+            ("02", "Required care", "Medicine, test and/or review requirements are checked."),
+            ("03", "Access dependency", "Distance, connectivity and stock signals are considered when present."),
+            ("04", "Next action", "A transparent rule selects the operational follow-up step."),
+        ]
+        for step, heading, body in steps:
+            st.markdown(
+                f'''<div class="health-step">
+<div class="health-step-title">{step} · {html.escape(heading)}</div>
+<div class="health-step-text">{html.escape(body)}</div>
+</div>''',
+                unsafe_allow_html=True,
+            )
+
+    st.divider()
+    subsection("Recommended Next-Best Action")
+    action_text = text_value(row.get("next_best_action", "No action available."))
+    cadre_text = text_value(row.get("recommended_cadre", "N/A"))
+    dependency_text = text_value(row.get("dependency", "N/A"))
+    st.markdown(
+        f'''<div class="decision-box">
+<strong>{html.escape(action_text)}</strong><br>
+<span>Responsible cadre: {html.escape(cadre_text)}</span><br>
+<span>Dependency: {html.escape(dependency_text)}</span>
+</div>''',
+        unsafe_allow_html=True,
+    )
+
+    subsection("Why This Action Was Selected")
+    st.info(text_value(row.get("reason", ""), "No existing model explanation available."))
+
+    st.divider()
+    subsection("Action Distribution")
+    action_distribution = (
+        nba["next_best_action"].fillna("No action available").astype(str).value_counts().head(10)
+    )
+    horizontal_bars(action_distribution, max_items=10)
+
+    st.markdown(
+        '<div class="decision-box"><strong>Human-in-the-loop boundary.</strong> '
+        '<span>The engine recommends operational follow-up work. An authorized health worker reviews and executes the action. '
+        'The engine does not diagnose, prescribe, or autonomously alter treatment.</span></div>',
+        unsafe_allow_html=True,
     )
 
 
